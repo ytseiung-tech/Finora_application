@@ -1,0 +1,31 @@
+@echo off
+REM Budget Glass - Expo Preview Startup Script
+echo 💎 Starting Budget Glass Expo Preview...
+echo.
+
+REM Check if we're in the right directory
+if not exist "package.json" (
+    echo ❌ Error: Please run this script from the Expo directory
+    exit /b 1
+)
+
+REM Check if node_modules exists
+if not exist "node_modules" (
+    echo 📦 Installing dependencies...
+    npm install
+    echo.
+)
+
+REM Start the Expo development server
+echo 🚀 Starting Expo development server...
+echo.
+echo 📱 Available options:
+echo    • Press 'i' to open iOS simulator
+echo    • Press 'a' to open Android emulator
+echo    • Press 'w' to open in web browser
+echo    • Scan QR code with Expo Go app on your phone
+echo.
+echo 🌐 For remote preview, run: npm run preview
+echo.
+
+npm start

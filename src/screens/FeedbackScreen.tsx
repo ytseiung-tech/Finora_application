@@ -9,12 +9,15 @@ import {
   Alert,
   ActivityIndicator,
   Linking,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
 import { FEEDBACK_CONFIG } from '../config/feedback.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassCard } from '../components/GlassCard';
+import { GlassButton } from '../components/GlassButton';
 
 interface FeedbackScreenProps {
   navigation: any;
@@ -22,7 +25,7 @@ interface FeedbackScreenProps {
 
 export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) => {
   const { config } = useApp();
-  const theme = THEME_COLORS[config.theme];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
@@ -120,7 +123,41 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
   };
 
   const handleSubmit = async () => {
-    // 驗證
+    // 驗證所有欄位必填
+    if (!name.trim()) {
+      Alert.alert(
+        config.language === 'zh-TW' ? '錯誤' : 'Error',
+        config.language === 'zh-TW' ? '請輸入姓名' : 'Please enter your name'
+      );
+      return;
+    }
+
+    if (!email.trim()) {
+      Alert.alert(
+        config.language === 'zh-TW' ? '錯誤' : 'Error',
+        config.language === 'zh-TW' ? '請輸入電子郵件' : 'Please enter your email'
+      );
+      return;
+    }
+
+    // 驗證 Email 格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert(
+        config.language === 'zh-TW' ? '錯誤' : 'Error',
+        config.language === 'zh-TW' ? '電子郵件格式不正確' : 'Invalid email format'
+      );
+      return;
+    }
+
+    if (!subject.trim()) {
+      Alert.alert(
+        config.language === 'zh-TW' ? '錯誤' : 'Error',
+        config.language === 'zh-TW' ? '請輸入主題' : 'Please enter subject'
+      );
+      return;
+    }
+
     if (!message.trim()) {
       Alert.alert(
         config.language === 'zh-TW' ? '錯誤' : 'Error',
@@ -202,7 +239,7 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: theme.cardSecondary }]}
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Text style={[styles.backIcon, { color: theme.text }]}>←</Text>
@@ -214,49 +251,18 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Info Section */}
-          <View style={[styles.infoCard, { backgroundColor: theme.primary + '26', borderColor: theme.primary + '4D' }]}>
-            <Text style={styles.infoIcon}>ℹ️</Text>
-            <Text style={[styles.infoTitle, { color: theme.text }]}>
-              {isZhTW ? '聯絡我們' : 'Contact Us'}
-            </Text>
-            <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-              {isZhTW 
-                ? '如有任何問題或建議，請透過以下方式聯絡我們：'
-                : 'For any questions or suggestions, please contact us:'
-              }
-            </Text>
-            <TouchableOpacity 
-              style={[styles.emailButton, { backgroundColor: theme.primary + '4D' }]}
-              onPress={() => {
-                Linking.openURL(`mailto:${FEEDBACK_CONFIG.FEEDBACK_EMAIL}`).catch(err =>
-                  console.error('Failed to open email:', err)
-                );
-              }}
-            >
-              <Text style={[styles.emailText, { color: theme.primary }]}>
-                📧 {FEEDBACK_CONFIG.FEEDBACK_EMAIL}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.websiteButton, { backgroundColor: theme.success + '26' }]}
-              onPress={() => {
-                Linking.openURL(`https://${FEEDBACK_CONFIG.TEAM_WEBSITE}`).catch(err =>
-                  console.error('Failed to open website:', err)
-                );
-              }}
-            >
-              <Text style={[styles.websiteText, { color: theme.success }]}>
-                🌐 {FEEDBACK_CONFIG.TEAM_WEBSITE}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Name Input */}
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>
-              👤 {isZhTW ? '姓名' : 'Name'} <Text style={[styles.optionalText, { color: theme.textSecondary }]}>({isZhTW ? '選填' : 'Optional'})</Text>
-            </Text>
+            <View style={styles.labelRow}>
+              <Image
+                source={require('../../assets/feedback icon/user.png')}
+                style={[styles.labelIcon, { tintColor: theme.text }]}
+                resizeMode="contain"
+              />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                {isZhTW ? '姓名' : 'Name'} <Text style={{ color: theme.error }}>*</Text>
+              </Text>
+            </View>
             <TextInput
               style={[styles.textInput, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
               placeholder={isZhTW ? '請輸入您的姓名' : 'Enter your name'}
@@ -268,12 +274,19 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
 
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>
-              📧 Email <Text style={[styles.optionalText, { color: theme.textSecondary }]}>({isZhTW ? '選填' : 'Optional'})</Text>
-            </Text>
+            <View style={styles.labelRow}>
+              <Image
+                source={require('../../assets/feedback icon/email.png')}
+                style={[styles.labelIcon, { tintColor: theme.text }]}
+                resizeMode="contain"
+              />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                {isZhTW ? '電子郵件' : 'Email'} <Text style={{ color: theme.error }}>*</Text>
+              </Text>
+            </View>
             <TextInput
               style={[styles.textInput, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
-              placeholder={isZhTW ? '請輸入您的 Email' : 'Enter your email'}
+              placeholder={isZhTW ? '請輸入您的電子郵件' : 'Enter your email'}
               placeholderTextColor={theme.textSecondary}
               value={email}
               onChangeText={setEmail}
@@ -284,9 +297,16 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
 
           {/* Subject Input */}
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>
-              📌 {isZhTW ? '主題' : 'Subject'} <Text style={[styles.optionalText, { color: theme.textSecondary }]}>({isZhTW ? '選填' : 'Optional'})</Text>
-            </Text>
+            <View style={styles.labelRow}>
+              <Image
+                source={require('../../assets/feedback icon/office-push-pin.png')}
+                style={[styles.labelIcon, { tintColor: theme.text }]}
+                resizeMode="contain"
+              />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                {isZhTW ? '主題' : 'Subject'} <Text style={{ color: theme.error }}>*</Text>
+              </Text>
+            </View>
             <TextInput
               style={[styles.textInput, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
               placeholder={isZhTW ? '請輸入主題' : 'Enter subject'}
@@ -298,9 +318,16 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
 
           {/* Message Input */}
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.text }]}>
-              💬 {isZhTW ? '訊息' : 'Message'} <Text style={[styles.requiredText, { color: theme.error }]}>*</Text>
-            </Text>
+            <View style={styles.labelRow}>
+              <Image
+                source={require('../../assets/feedback icon/chat.png')}
+                style={[styles.labelIcon, { tintColor: theme.text }]}
+                resizeMode="contain"
+              />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                {isZhTW ? '訊息' : 'Message'} <Text style={[styles.requiredText, { color: theme.error }]}>*</Text>
+              </Text>
+            </View>
             <TextInput
               style={[styles.textArea, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
               placeholder={isZhTW 
@@ -326,23 +353,18 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
           </View>
 
           {/* Submit Button */}
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              { backgroundColor: theme.primary },
-              (!message.trim() || sending) && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={!message.trim() || sending}
-          >
-            {sending ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.submitButtonText}>
-                {isZhTW ? '提交反饋' : 'Submit Feedback'}
-              </Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.submitButtonWrapper}>
+            <GlassButton
+              title={sending 
+                ? (isZhTW ? '發送中...' : 'Sending...') 
+                : (isZhTW ? '提交反饋' : 'Submit Feedback')
+              }
+              onPress={handleSubmit}
+              variant="primary"
+              size="large"
+              disabled={!message.trim() || sending}
+            />
+          </View>
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
@@ -370,15 +392,16 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
   },
   backIcon: {
     fontSize: 28,
-    fontWeight: '300',
+    fontWeight: '400',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
+    flex: 1,
+    textAlign: 'left',
   },
   scrollView: {
     flex: 1,
@@ -389,10 +412,27 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
+    alignItems: 'center',
   },
   infoIcon: {
-    fontSize: 32,
+    width: 48,
+    height: 48,
     marginBottom: 12,
+  },
+  buttonIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  labelIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
   },
   infoTitle: {
     fontSize: 18,
@@ -440,6 +480,10 @@ const styles = StyleSheet.create({
   charCountWarning: {
     color: '#ffa500',
   },
+  submitButtonWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+  },
   submitButton: {
     borderRadius: 12,
     padding: 16,
@@ -460,6 +504,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   emailText: {
     fontSize: 16,
@@ -470,6 +516,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   websiteText: {
     fontSize: 16,

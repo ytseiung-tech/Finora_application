@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,6 +15,9 @@ import { DataService } from '../services/DataService';
 import { useApp } from '../context/AppContext';
 import { translations } from '../config/app.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassCard } from '../components/GlassCard';
+import { GlassButton } from '../components/GlassButton';
+import { formatCompactNumber } from '../utils/formatting';
 
 interface PassbookSummary {
   id: string;
@@ -22,6 +26,7 @@ interface PassbookSummary {
   expenses: number;
   balance: number;
   color: string;
+  photoUri?: string;
 }
 
 interface CheckScreenProps {
@@ -31,7 +36,18 @@ interface CheckScreenProps {
 export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
   const { config } = useApp();
   const t = translations[config.language];
-  const theme = THEME_COLORS[config.theme];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
+  const isDark = ['charcoalViolet', 'forestShadow', 'inkBlack'].includes(config.theme);
+  
+  // Helper function to format amounts
+  const formatAmount = (amount: number) => {
+    console.log('formatAmount called with:', amount);
+    if (Math.abs(amount) >= 100000) {
+      return `NT$ ${formatCompactNumber(amount)}`;
+    }
+    return `NT$ ${amount.toLocaleString()}`;
+  };
+  
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [passbooks, setPassbooks] = useState<PassbookSummary[]>([]);
@@ -86,10 +102,12 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
           expenses,
           balance: passbook.balance,
           color: passbook.color,
+          photoUri: passbook.photoUri,
         };
       });
 
       setPassbooks(summaries);
+      console.log('CheckScreen passbooks loaded:', summaries);
     } catch (error) {
       console.error('Error loading passbook data:', error);
     } finally {
@@ -132,92 +150,124 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
   };
 
   const renderPassbookCard = (passbook: PassbookSummary) => (
-    <View 
-      key={passbook.id} 
-      style={[
-        styles.passbookCard, 
-        { 
-          backgroundColor: theme.card,
-          borderColor: passbook.color,
-          borderWidth: 2,
-        }
-      ]}
-    >
-      <View style={styles.passbookInfo}>
-        <Text style={[styles.passbookName, { color: theme.text }]}>{passbook.name}</Text>
-        <Text style={[styles.passbookDetails, { color: theme.textSecondary }]}>
-          {t.incomeLabel}: NT$ {passbook.income.toLocaleString()}
-        </Text>
-        <Text style={[styles.passbookDetails, { color: theme.textSecondary }]}>
-          {t.expensesLabel}: NT$ {passbook.expenses.toLocaleString()}
-        </Text>
-        <Text style={[styles.passbookBalance, { color: theme.primary }]}>
-          {t.balanceLabel}: NT$ {passbook.balance.toLocaleString()}
-        </Text>
-      </View>
+    <View style={styles.passbookCardWrapper}>
+      <GlassCard
+        variant="dark"
+        borderRadius={16}
+        padding={16}
+        margin={0}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.passbookInfo}>
+            <Text style={[styles.passbookName, { color: theme.text }]}>{passbook.name}</Text>
+            <View style={styles.detailsRow}>
+              <Text style={[styles.passbookDetails, { color: theme.textSecondary }]}>
+                {t.incomeLabel}: {formatAmount(passbook.income)}
+              </Text>
+              <Text style={[styles.passbookDetails, { color: theme.textSecondary }]}>  </Text>
+              <Text style={[styles.passbookDetails, { color: theme.textSecondary }]}>
+                {t.expensesLabel}: {formatAmount(passbook.expenses)}
+              </Text>
+            </View>
+            <Text style={[styles.passbookBalance, { color: theme.primary }]}>
+              {t.balanceLabel}: {formatAmount(passbook.balance)}
+            </Text>
+          </View>
+          {passbook.photoUri ? (
+            <Image
+              source={{ uri: passbook.photoUri }}
+              style={styles.passbookCardPhoto}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.passbookColorCircle, { backgroundColor: passbook.color }]} />
+          )}
+        </View>
+      </GlassCard>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text, textAlign: 'center', flex: 1 }]}>{t.passbook}</Text>
-        </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: theme.text, textAlign: 'left', flex: 1 }]}>{t.passbook}</Text>
+      </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ paddingHorizontal: 16 }}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>{t.monthlySummary}</Text>
 
           <View style={styles.monthSelector}>
-            <TouchableOpacity 
-              style={[styles.monthButton, { backgroundColor: theme.cardSecondary }]}
+            <TouchableOpacity
+              style={[styles.monthButton, { backgroundColor: theme.cardAlt }]}
               onPress={handlePreviousMonth}
             >
               <Text style={[styles.monthButtonText, { color: theme.text }]}>←</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.monthDisplay, { backgroundColor: theme.cardSecondary }]}
+
+            <TouchableOpacity
+              style={[styles.monthDisplay, { backgroundColor: theme.cardAlt }]}
               onPress={handleOpenDatePicker}
               activeOpacity={0.7}
             >
               <Text style={[styles.monthText, { color: theme.text }]}>
-                {config.language === 'zh-TW' ? monthsZh[selectedMonth] : months[selectedMonth]} {selectedYear}
+                {config.language === 'zh-TW'
+                  ? monthsZh[selectedMonth]
+                  : months[selectedMonth]}{' '}
+                {selectedYear}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.monthButton, { backgroundColor: theme.cardSecondary }]}
+
+            <TouchableOpacity
+              style={[styles.monthButton, { backgroundColor: theme.cardAlt }]}
               onPress={handleNextMonth}
             >
               <Text style={[styles.monthButtonText, { color: theme.text }]}>→</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.passbooksList}>
-            {loading ? (
-              <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t.loading}</Text>
-            ) : passbooks.length > 0 ? (
-              passbooks.map(renderPassbookCard)
-            ) : (
-              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>{t.noDataForMonth}</Text>
-            )}
-          </View>
+          {/* Passbook Cards */}
+          {loading ? (
+            <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+              {t.loading}
+            </Text>
+          ) : passbooks.length > 0 ? (
+            passbooks.map((passbook) => (
+              <View key={passbook.id}>
+                {renderPassbookCard(passbook)}
+              </View>
+            ))
+          ) : (
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+              {t.noDataForMonth}
+            </Text>
+          )}
 
           <Text style={[styles.footerText, { color: theme.textSecondary }]}>
             {t.displaysMonthlyInfo}
           </Text>
+        </View>
+      </ScrollView>
 
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
-
-        {/* Date Picker Modal */}
-        <Modal
-          visible={showDatePicker}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={handleCancelDate}
-        >
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelDate}
+      >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <View style={[
+              styles.modalContent, 
+              { backgroundColor: isDark ? 'rgba(35,35,40,0.98)' : theme.card,
+                borderWidth: isDark ? 1 : 0,
+                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'transparent' 
+              }
+            ]}>
               <Text style={[styles.modalTitle, { color: theme.text }]}>
                 {config.language === 'zh-TW' ? '選擇日期' : 'Select Date'}
               </Text>
@@ -225,14 +275,20 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
               {/* Year Selector */}
               <View style={styles.pickerRow}>
                 <TouchableOpacity 
-                  style={[styles.pickerButton, { backgroundColor: theme.cardSecondary }]}
+                  style={[
+                    styles.pickerButton, 
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : theme.cardAlt }
+                  ]}
                   onPress={() => setTempYear(tempYear - 1)}
                 >
                   <Text style={[styles.pickerButtonText, { color: theme.text }]}>-</Text>
                 </TouchableOpacity>
                 <Text style={[styles.pickerValue, { color: theme.text }]}>{tempYear}</Text>
                 <TouchableOpacity 
-                  style={[styles.pickerButton, { backgroundColor: theme.cardSecondary }]}
+                  style={[
+                    styles.pickerButton, 
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : theme.cardAlt }
+                  ]}
                   onPress={() => setTempYear(tempYear + 1)}
                 >
                   <Text style={[styles.pickerButtonText, { color: theme.text }]}>+</Text>
@@ -246,7 +302,7 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                     key={index}
                     style={[
                       styles.monthGridItem,
-                      { backgroundColor: theme.cardSecondary },
+                      { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : theme.cardAlt },
                       tempMonth === index && { backgroundColor: theme.primary }
                     ]}
                     onPress={() => setTempMonth(index)}
@@ -254,7 +310,7 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                     <Text style={[
                       styles.monthGridText,
                       { color: theme.text },
-                      tempMonth === index && { color: '#ffffff', fontWeight: '700' }
+                      tempMonth === index && { color: '#FFFFFF', fontWeight: '700' }
                     ]}>
                       {month}
                     </Text>
@@ -265,7 +321,10 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
               {/* Action Buttons */}
               <View style={styles.modalActions}>
                 <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: theme.border }]}
+                  style={[
+                    styles.modalButton, 
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : theme.border }
+                  ]}
                   onPress={handleCancelDate}
                 >
                   <Text style={[styles.modalButtonText, { color: theme.text }]}>
@@ -276,16 +335,15 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                   style={[styles.modalButton, { backgroundColor: theme.primary }]}
                   onPress={handleConfirmDate}
                 >
-                  <Text style={[styles.modalButtonText, { color: '#ffffff' }]}>
-                    {config.language === 'zh-TW' ? '確定' : 'Confirm'}
+                  <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>
+                    {config.language === 'zh-TW' ? '確認' : 'Confirm'}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -293,49 +351,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  safeArea: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  menuButton: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuIcon: {
-    fontSize: 24,
+    paddingVertical: 8,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.015,
-  },
-  spacer: {
-    width: 48,
-  },
-  scrollView: {
-    flex: 1,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: -0.015,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 4,
     paddingBottom: 8,
   },
   monthSelector: {
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    marginBottom: 4,
   },
   monthButton: {
     height: 32,
@@ -360,60 +399,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  passbooksList: {
-    paddingHorizontal: 16,
+  passbookCardWrapper: {
+    marginBottom: 8,
   },
-  passbookCard: {
+  cardContent: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 16,
+  },
+  passbookCardPhoto: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginLeft: 12,
+  },
+  passbookColorCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginLeft: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   passbookInfo: {
-    flex: 2,
-    gap: 4,
+    flex: 1,
+    gap: 2,
   },
   passbookName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
   passbookDetails: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
   },
   passbookBalance: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    marginTop: 4,
-  },
-  passbookImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    opacity: 0.3,
+    marginTop: 2,
   },
   loadingText: {
     fontSize: 14,
     textAlign: 'center',
-    paddingVertical: 32,
+    paddingVertical: 24,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
-    paddingVertical: 32,
+    paddingVertical: 24,
   },
   footerText: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-  bottomSpacer: {
-    height: 20,
+    paddingVertical: 16,
+    paddingTop: 20,
   },
   modalOverlay: {
     position: 'absolute',
@@ -491,3 +534,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+
+

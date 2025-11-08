@@ -34,13 +34,14 @@ export class DataService {
     }
   }
 
-  static async createPassbook(name: string, color: string): Promise<Passbook> {
+  static async createPassbook(name: string, color: string, photoUri?: string): Promise<Passbook> {
     try {
       const passbooks = await this.getPassbooks();
       const newPassbook: Passbook = {
         id: Date.now().toString(),
         name,
         color,
+        photoUri,
         balance: 0,
         isActive: true,
         createdAt: new Date(),
@@ -55,7 +56,7 @@ export class DataService {
     }
   }
 
-  static async updatePassbook(id: string, updates: { name?: string; color?: string; isActive?: boolean; ratio?: number; balance?: number }): Promise<void> {
+  static async updatePassbook(id: string, updates: { name?: string; color?: string; photoUri?: string; isActive?: boolean; ratio?: number; balance?: number }): Promise<void> {
     try {
       const passbooks = await this.getPassbooks();
       const index = passbooks.findIndex(p => p.id === id);
@@ -120,7 +121,7 @@ export class DataService {
     }
   }
 
-  static async updateTransaction(transactionId: string, updates: { amount?: number; description?: string; passbookId?: string }): Promise<void> {
+  static async updateTransaction(transactionId: string, updates: { amount?: number; description?: string; passbookId?: string; date?: Date }): Promise<void> {
     try {
       const transactions = await this.getTransactions();
       const transactionIndex = transactions.findIndex(t => t.id === transactionId);
@@ -192,6 +193,7 @@ export class DataService {
         amount: updates.amount ?? oldTransaction.amount,
         description: updates.description ?? oldTransaction.description,
         passbookId: updates.passbookId ?? oldTransaction.passbookId,
+        date: updates.date ?? oldTransaction.date,
         updatedAt: new Date(),
       };
       

@@ -2,15 +2,24 @@ import React from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AppNavigator } from './src/navigation/AppNavigator';
-import { AppProvider } from './src/context/AppContext';
+import { AppProvider, useApp } from './src/context/AppContext';
+
+function AppContent() {
+  const { config } = useApp();
+  const isDark = ['cinderSmoke', 'duskIndigo', 'charcoalFrost'].includes(config.theme);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <AppNavigator />
+      <StatusBar style={isDark ? "light" : "dark"} backgroundColor="transparent" translucent />
+    </View>
+  );
+}
 
 export default function App() {
   return (
     <AppProvider>
-      <View style={{ flex: 1 }}>
-        <AppNavigator />
-        <StatusBar style="light" backgroundColor="transparent" translucent />
-      </View>
+      <AppContent />
     </AppProvider>
   );
 }

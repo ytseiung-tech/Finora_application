@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,6 +15,8 @@ import { Passbook } from '../models/Passbook';
 import { useApp } from '../context/AppContext';
 import { translations } from '../config/app.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassCard } from '../components/GlassCard';
+import { formatCompactNumber } from '../utils/formatting';
 
 interface HomeScreenProps {
   navigation: any;
@@ -22,8 +25,12 @@ interface HomeScreenProps {
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { config } = useApp();
   const t = translations[config.language];
-  const theme = THEME_COLORS[config.theme];
-  const styles = createStyles(theme);
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
+  
+  // Detect dark theme
+  const isDarkTheme = ['charcoalViolet', 'forestShadow', 'inkBlack'].includes(config.theme);
+  
+  const styles = createStyles(theme, isDarkTheme);
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
@@ -54,6 +61,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 
   const formatCurrency = (amount: number) => {
+    // For large numbers (>= 100,000), use compact format
+    if (Math.abs(amount) >= 100000) {
+      return `NT$ ${formatCompactNumber(amount)}`;
+    }
     return `NT$ ${amount.toLocaleString('zh-TW')}`;
   };
 
@@ -71,14 +82,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     return (
       <TouchableOpacity 
         key={passbook.id}
-        style={[styles.passbookCard, { borderLeftColor: passbook.color, borderLeftWidth: 4 }]}
         onPress={() => navigation.navigate('Check')}
+        activeOpacity={0.7}
+        style={styles.passbookCardWrapper}
       >
-        <Text style={styles.passbookName}>{passbook.name}</Text>
-        <Text style={styles.passbookBalance}>{formatCurrency(passbook.balance)}</Text>
-        <View style={styles.passbookStats}>
-          <Text style={styles.incomeText}>{t.income} {formatCurrency(income)}</Text>
-          <Text style={styles.expenseText}>{t.expense} {formatCurrency(expense)}</Text>
+        <View style={styles.passbookCard}>
+          <Text style={styles.passbookName}>{passbook.name}</Text>
+          <Text style={styles.passbookBalance}>{formatCurrency(passbook.balance)}</Text>
+          <View style={styles.passbookStats}>
+            <Text style={styles.incomeText}>↑ {formatCurrency(income)}</Text>
+            <Text style={styles.expenseText}>↓ {formatCurrency(expense)}</Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -87,42 +101,49 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const renderTransaction = (transaction: Transaction) => {
     const passbook = passbooks.find(pb => pb.id === transaction.passbookId);
     const iconColor = passbook?.color || '#9dafb8';
+    const photoUri = passbook?.photoUri;
     
     return (
       <TouchableOpacity
         key={transaction.id}
-        style={[styles.transactionItemWrapper, { backgroundColor: theme.card }]}
+        style={styles.transactionItem}
         onPress={() => navigation.navigate('TransactionDetail', { transactionId: transaction.id })}
         activeOpacity={0.7}
       >
-        <View style={[styles.transactionItem, { backgroundColor: theme.card }]}>
+        {photoUri ? (
+          <Image
+            source={{ uri: photoUri }}
+            style={styles.transactionIconPhoto}
+            resizeMode="cover"
+          />
+        ) : (
           <View style={[styles.transactionIcon, { backgroundColor: iconColor }]}>
             <Text style={styles.transactionIconText}>
               {transaction.isIncome ? '↑' : '↓'}
             </Text>
           </View>
-          
-          <View style={styles.transactionInfo}>
-            <Text 
-              style={[styles.transactionDescription, { color: theme.text }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {transaction.description}
-            </Text>
-            <View style={styles.transactionMeta}>
-              <Text style={[styles.transactionDate, { color: theme.textSecondary }]}>{formatDate(transaction.date)}</Text>
-              <Text style={[styles.transactionPassbook, { color: theme.textSecondary }]}> • {transaction.passbookName}</Text>
-            </View>
-          </View>
-          
-          <Text style={[
-            styles.transactionAmount,
-            { color: transaction.isIncome ? theme.success : theme.error }
-          ]}>
-            {transaction.isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+        )}
+        
+        <View style={styles.transactionInfo}>
+          <Text 
+            style={styles.transactionDescription}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {transaction.description}
           </Text>
+          <View style={styles.transactionMeta}>
+            <Text style={styles.transactionDate}>{formatDate(transaction.date)}</Text>
+            <Text style={styles.transactionPassbook}> • {transaction.passbookName}</Text>
+          </View>
         </View>
+        
+        <Text style={[
+          styles.transactionAmount,
+          { color: transaction.isIncome ? theme.success : '#FB7185' }
+        ]}>
+          {transaction.isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -131,16 +152,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t.financialOverview}</Text>
-          <View style={styles.spacer} />
+          <Text style={styles.headerTitle}>{t.home}</Text>
         </View>
 
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Total Balance Card */}
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>{t.totalBalance}</Text>
             <Text style={styles.balance}>{formatCurrency(totalBalance)}</Text>
           </View>
 
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* My Accounts Grid */}
           {passbooks.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t.myAccounts}</Text>
@@ -150,6 +172,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           )}
 
+          {/* Recent Transactions */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t.recentTransactions}</Text>
@@ -177,7 +200,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 };
 
-const createStyles = (theme: typeof THEME_COLORS.dark) => StyleSheet.create({
+const createStyles = (theme: typeof THEME_COLORS.mistBlue, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.background,
@@ -190,50 +213,60 @@ const createStyles = (theme: typeof THEME_COLORS.dark) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 6,
+    paddingBottom: 12,
   },
   headerTitle: {
     color: theme.text,
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: -0.015,
-    flex: 1,
-  },
-  spacer: {
-    width: 48,
-  },
-  balanceCard: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    alignItems: 'center',
-    backgroundColor: theme.card,
-    marginHorizontal: 16,
-    marginVertical: 12,
-    borderRadius: 16,
-  },
-  balanceLabel: {
-    color: theme.textSecondary,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  balance: {
-    color: theme.text,
-    fontSize: 36,
-    fontWeight: '700',
+    fontSize: 35,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   scrollView: {
     flex: 1,
   },
+  
+  // Balance Card
+  balanceCard: {
+    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : theme.card,
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    marginHorizontal: 16,
+    marginTop: 0,
+    marginBottom: 20,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: isDark ? 0.4 : 0.05,
+    shadowRadius: isDark ? 12 : 6,
+    shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+    elevation: isDark ? 8 : 2,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: isDark ? 'rgba(255,255,255,0.6)' : theme.textSecondary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  balance: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: theme.text,
+    letterSpacing: -1,
+  },
+
+  // Section
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: theme.text,
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: -0.015,
+    color: theme.text,
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    marginBottom: 8,
+    letterSpacing: -0.3,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -245,58 +278,78 @@ const createStyles = (theme: typeof THEME_COLORS.dark) => StyleSheet.create({
   viewAllText: {
     color: theme.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
+
+  // Passbook Grid (2x2 大卡片)
   passbookGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 16,
-    gap: 12,
+    justifyContent: 'space-between',
+  },
+  passbookCardWrapper: {
+    width: '48%',
+    marginBottom: 12,
   },
   passbookCard: {
-    width: '47%',
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: theme.card,
-    borderLeftWidth: 4,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : theme.card,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: isDark ? 0 : 2,
+    minHeight: 110,
   },
   passbookName: {
-    color: theme.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 8,
+    color: isDark ? '#E5E7EB' : theme.text,
+    marginBottom: 6,
   },
   passbookBalance: {
-    color: theme.text,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 12,
+    color: theme.text,
+    marginBottom: 8,
   },
   passbookStats: {
     gap: 4,
   },
   incomeText: {
-    color: theme.success,
     fontSize: 12,
+    fontWeight: '500',
+    color: theme.success,
   },
   expenseText: {
-    color: theme.error,
     fontSize: 12,
+    fontWeight: '500',
+    color: '#FB7185',
   },
+
+  // Transactions List (深色用極淺灰，不用白)
   transactionsList: {
     paddingHorizontal: 16,
-  },
-  transactionItemWrapper: {
-    borderRadius: 12,
-    marginBottom: 8,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
+    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : theme.card,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: isDark ? 0 : 0.03,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
   },
   transactionIcon: {
     width: 40,
@@ -305,55 +358,62 @@ const createStyles = (theme: typeof THEME_COLORS.dark) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-    flexShrink: 0,
+  },
+  transactionIconPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
   },
   transactionIconText: {
-    color: '#ffffff',
-    fontSize: 20,
+    color: '#FFFFFF',
+    fontSize: 18,
     fontWeight: '700',
   },
   transactionInfo: {
     flex: 1,
-    marginRight: 8,
-    overflow: 'hidden',
+    marginRight: 12,
   },
   transactionDescription: {
-    color: theme.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 4,
+    color: theme.text,
+    marginBottom: 3,
   },
   transactionMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
   },
   transactionDate: {
-    color: theme.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
+    color: isDark ? '#9CA3AF' : theme.textSecondary,
   },
   transactionPassbook: {
-    color: theme.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
+    color: isDark ? '#9CA3AF' : theme.textSecondary,
   },
   transactionAmount: {
     fontSize: 16,
     fontWeight: '700',
   },
+
+  // Empty State
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
   },
   emptyText: {
+    fontSize: 15,
+    fontWeight: '500',
     color: theme.textSecondary,
-    fontSize: 16,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   emptySubtext: {
+    fontSize: 13,
     color: theme.textSecondary,
-    fontSize: 14,
   },
+  
   bottomSpacer: {
-    height: 120,
+    height: 100,
   },
 });

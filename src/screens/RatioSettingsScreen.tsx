@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,6 +16,7 @@ import { Passbook } from '../models/Passbook';
 import { useApp } from '../context/AppContext';
 import { translations } from '../config/app.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassButton } from '../components/GlassButton';
 
 interface RatioSettingsScreenProps {
   navigation: any;
@@ -24,15 +26,22 @@ interface PassbookRatio {
   id: string;
   name: string;
   color: string;
+  photoUri?: string;
   ratio: number;
 }
 
 export const RatioSettingsScreen: React.FC<RatioSettingsScreenProps> = ({ navigation }) => {
   const { config } = useApp();
   const t = translations[config.language];
-  const theme = THEME_COLORS[config.theme];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
+
   const [passbooks, setPassbooks] = useState<PassbookRatio[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const primarySoft = theme.primarySoft || 'rgba(183,154,210,0.14)';
+  const cardAlt = theme.cardAlt || theme.card || 'rgba(255,255,255,0.96)';
+  const successColor = theme.success || '#22C55E';
+  const errorColor = theme.error || '#F97373';
 
   useFocusEffect(
     useCallback(() => {
@@ -43,60 +52,82 @@ export const RatioSettingsScreen: React.FC<RatioSettingsScreenProps> = ({ naviga
   const loadPassbooks = async () => {
     try {
       setLoading(true);
-      const pbs = await DataService.getPassbooks();
-      
-      // Convert to ratio format, default to equal distribution if no ratio set
-      const totalRatio = pbs.reduce((sum, pb) => sum + (pb.ratio || 0), 0);
-      const defaultRatio = totalRatio === 0 ? Math.floor(100 / pbs.length) : 0;
-      
-      const ratios = pbs.map(pb => ({
-        id: pb.id,
-        name: pb.name,
-        color: pb.color,
-        ratio: pb.ratio || defaultRatio,
-      }));
-      
+      const pbs: Passbook[] = await DataService.getPassbooks();
+
+      if (!pbs || pbs.length === 0) {
+        setPassbooks([]);
+        return;
+      }
+
+      const explicitTotal = pbs.reduce(
+        (sum, pb) => sum + (typeof pb.ratio === 'number' ? pb.ratio : 0),
+        0
+      );
+
+      const useDefault = explicitTotal === 0;
+      const equal = useDefault ? Math.floor(100 / pbs.length) : 0;
+      const remainder = useDefault ? 100 - equal * pbs.length : 0;
+
+      const ratios: PassbookRatio[] = pbs.map((pb, index) => {
+        let ratio = 0;
+
+        if (typeof pb.ratio === 'number') {
+          ratio = pb.ratio;
+        } else if (useDefault) {
+          ratio = equal + (index === 0 ? remainder : 0);
+        }
+
+        return {
+          id: pb.id,
+          name: pb.name,
+          color: pb.color,
+          photoUri: pb.photoUri,
+          ratio,
+        };
+      });
+
       setPassbooks(ratios);
     } catch (error) {
       console.error('Error loading passbooks:', error);
-      Alert.alert(t.error, config.language === 'zh-TW' ? '載入存摺失敗' : 'Failed to load passbooks');
+      Alert.alert(
+        t.error,
+        config.language === 'zh-TW' ? '載入存摺失敗' : 'Failed to load passbooks'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleRatioChange = (id: string, value: string) => {
-    const numValue = parseInt(value) || 0;
-    if (numValue < 0 || numValue > 100) return;
-    
-    setPassbooks(prev => 
-      prev.map(pb => pb.id === id ? { ...pb, ratio: numValue } : pb)
+    const numValue = parseInt(value || '0', 10);
+    if (isNaN(numValue) || numValue < 0 || numValue > 100) return;
+
+    setPassbooks(prev =>
+      prev.map(pb => (pb.id === id ? { ...pb, ratio: numValue } : pb))
     );
   };
 
+  const getTotalRatio = () =>
+    passbooks.reduce((sum, pb) => sum + (pb.ratio || 0), 0);
+
   const handleSave = async () => {
-    const totalRatio = passbooks.reduce((sum, pb) => sum + pb.ratio, 0);
-    
+    const totalRatio = getTotalRatio();
+
     if (totalRatio !== 100) {
-      const message = config.language === 'zh-TW'
-        ? `所有存摺的比例總和必須為 100%\n目前總和：${totalRatio}%`
-        : `Total ratio must equal 100%\nCurrent total: ${totalRatio}%`;
-      Alert.alert(
-        t.ratioError,
-        message,
-        [{ text: t.ok }]
-      );
+      const message =
+        config.language === 'zh-TW'
+          ? `所有存摺的比例總和必須為 100%\n目前總和：${totalRatio}%`
+          : `Total ratio must equal 100%\nCurrent total: ${totalRatio}%`;
+
+      Alert.alert(t.ratioError, message, [{ text: t.ok }]);
       return;
     }
 
     try {
-      // Update all passbooks with new ratios
       for (const pb of passbooks) {
-        await DataService.updatePassbook(pb.id, {
-          ratio: pb.ratio,
-        });
+        await DataService.updatePassbook(pb.id, { ratio: pb.ratio });
       }
-      
+
       Alert.alert(t.success, t.ratioSaved, [
         {
           text: t.ok,
@@ -104,44 +135,79 @@ export const RatioSettingsScreen: React.FC<RatioSettingsScreenProps> = ({ naviga
         },
       ]);
     } catch (error) {
-      console.error('Error saving ratios:', error);
+      console.log('Error saving ratios:', error);
       Alert.alert(t.error, t.ratioSaveFailed);
     }
   };
 
   const handleAutoDistribute = () => {
-    const equalRatio = Math.floor(100 / passbooks.length);
-    const remainder = 100 - (equalRatio * passbooks.length);
-    
-    setPassbooks(prev => 
+    if (passbooks.length === 0) return;
+
+    const equal = Math.floor(100 / passbooks.length);
+    const remainder = 100 - equal * passbooks.length;
+
+    setPassbooks(prev =>
       prev.map((pb, index) => ({
         ...pb,
-        ratio: equalRatio + (index === 0 ? remainder : 0),
+        ratio: equal + (index === 0 ? remainder : 0),
       }))
     );
   };
 
-  const getTotalRatio = () => {
-    return passbooks.reduce((sum, pb) => sum + pb.ratio, 0);
-  };
-
   const renderPassbookRatio = (passbook: PassbookRatio) => (
-    <View key={passbook.id} style={[styles.passbookItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+    <View
+      key={passbook.id}
+      style={[
+        styles.passbookItem,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.border,
+        },
+      ]}
+    >
       <View style={styles.passbookLeft}>
-        <View style={[styles.colorIndicator, { backgroundColor: passbook.color }]} />
-        <Text style={[styles.passbookName, { color: theme.text }]}>{passbook.name}</Text>
+        {passbook.photoUri ? (
+          <Image
+            source={{ uri: passbook.photoUri }}
+            style={styles.passbookPhoto}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={[
+              styles.colorIndicator,
+              { backgroundColor: passbook.color },
+            ]}
+          />
+        )}
+        <Text style={[styles.passbookName, { color: theme.text }]}>
+          {passbook.name}
+        </Text>
       </View>
-      
-      <View style={[styles.ratioInput, { backgroundColor: theme.cardSecondary }]}>
+
+      <View
+        style={[
+          styles.ratioInput,
+          { backgroundColor: cardAlt, borderColor: theme.border },
+        ]}
+      >
         <TextInput
-          style={[styles.input, { color: theme.text }]}
-          value={passbook.ratio.toString()}
-          onChangeText={(value) => handleRatioChange(passbook.id, value)}
+          style={[styles.ratioInputText, { color: theme.text }]}
+          value={
+            Number.isFinite(passbook.ratio)
+              ? passbook.ratio.toString()
+              : '0'
+          }
+          onChangeText={value => handleRatioChange(passbook.id, value)}
           keyboardType="number-pad"
           maxLength={3}
           placeholderTextColor={theme.textSecondary}
         />
-        <Text style={[styles.percentText, { color: theme.textSecondary }]}>%</Text>
+        <Text
+          style={[styles.percentText, { color: theme.textSecondary }]}
+        >
+          %
+        </Text>
       </View>
     </View>
   );
@@ -150,80 +216,159 @@ export const RatioSettingsScreen: React.FC<RatioSettingsScreenProps> = ({ naviga
   const isValid = totalRatio === 100;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: theme.cardSecondary }]}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={[styles.backIcon, { color: theme.text }]}>←</Text>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>{t.ratioSettingsTitle}</Text>
-          <TouchableOpacity
-            style={[styles.autoButton, { backgroundColor: theme.primary }]}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right', 'bottom']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={[styles.backIcon, { color: theme.text }]}>←</Text>
+        </TouchableOpacity>
+
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          {t.ratioSettingsTitle}
+        </Text>
+
+        <View style={styles.rightActionContainer}>
+          <GlassButton
+            title={config.language === 'zh-TW' ? '平均' : 'Equal'}
             onPress={handleAutoDistribute}
+            variant="secondary"
+            size="small"
+          />
+        </View>
+      </View>
+
+      <Text
+        style={[styles.subtitle, { color: theme.textSecondary }]}
+      >
+        {config.language === 'zh-TW'
+          ? '總和需為 100%'
+          : 'Total must equal 100%'}
+      </Text>
+
+      {/* Content */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Info */}
+        <View
+          style={[
+            styles.infoCard,
+            {
+              backgroundColor: theme.background,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          <Text
+            style={[styles.infoText, { color: theme.textSecondary }]}
           >
-            <Text style={styles.autoButtonText}>{config.language === 'zh-TW' ? '平均' : 'Equal'}</Text>
-          </TouchableOpacity>
+            {config.language === 'zh-TW'
+              ? '設定新增交易時的自動分配比例'
+              : 'Set auto-allocation ratio for new transactions'}
+          </Text>
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Text style={[styles.infoTitle, { color: theme.text }]}>{t.autoDistribution}</Text>
-            <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-              {t.setRatio}
+        {/* Total */}
+        <View
+          style={[
+            styles.totalCard,
+            {
+              backgroundColor: isValid
+                ? 'rgba(34,197,94,0.04)'
+                : 'rgba(239,68,68,0.04)',
+              borderColor: isValid 
+                ? 'rgba(34,197,94,0.15)' 
+                : 'rgba(239,68,68,0.15)',
+            },
+          ]}
+        >
+          <View>
+            <Text
+              style={[
+                styles.totalLabel,
+                { color: theme.textSecondary },
+              ]}
+            >
+              {t.totalRatio}
             </Text>
           </View>
-
-          <View style={[styles.totalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Text style={[styles.totalLabel, { color: theme.text }]}>{t.totalRatio}</Text>
-            <Text style={[
-              styles.totalValue,
-              { color: isValid ? theme.success : theme.error }
-            ]}>
-              {totalRatio}%
-            </Text>
-          </View>
-
-          {loading ? (
-            <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t.loading}</Text>
-          ) : passbooks.length > 0 ? (
-            <View style={styles.passbooksList}>
-              {passbooks.map(renderPassbookRatio)}
-            </View>
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                {config.language === 'zh-TW' ? '找不到存摺' : 'No passbooks found'}
-              </Text>
-              <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
-                {config.language === 'zh-TW' ? '請先在設定中建立存摺' : 'Create passbooks first in Settings'}
-              </Text>
-            </View>
-          )}
-
-          <TouchableOpacity
+          <Text
             style={[
-              styles.saveButton, 
-              { backgroundColor: theme.primary },
-              !isValid && [styles.saveButtonDisabled, { backgroundColor: theme.border, opacity: 0.5 }]
+              styles.totalValue,
+              {
+                color: isValid 
+                  ? 'rgba(34,197,94,0.8)' 
+                  : 'rgba(239,68,68,0.8)',
+              },
             ]}
-            onPress={handleSave}
-            disabled={!isValid}
           >
-            <Text style={styles.saveButtonText}>
-              {isValid 
-                ? t.save 
-                : `${t.adjustRatioTooltip} (${config.language === 'zh-TW' ? '目前' : 'current'} ${totalRatio}%)`
-              }
-            </Text>
-          </TouchableOpacity>
+            {totalRatio}%
+          </Text>
+        </View>
 
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+        {/* List */}
+        {loading ? (
+          <Text
+            style={[
+              styles.loadingText,
+              { color: theme.textSecondary },
+            ]}
+          >
+            {t.loading}
+          </Text>
+        ) : passbooks.length > 0 ? (
+          <View style={styles.passbooksList}>
+            {passbooks.map(renderPassbookRatio)}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text
+              style={[
+                styles.emptyText,
+                { color: theme.textSecondary },
+              ]}
+            >
+              {config.language === 'zh-TW'
+                ? '找不到存摺'
+                : 'No passbooks found'}
+            </Text>
+            <Text
+              style={[
+                styles.emptySubtext,
+                { color: theme.textSecondary },
+              ]}
+            >
+              {config.language === 'zh-TW'
+                ? '請先在設定中建立存摺'
+                : 'Create passbooks first in Settings'}
+            </Text>
+          </View>
+        )}
+
+        {/* Save */}
+        <View style={styles.saveButtonContainer}>
+          <GlassButton
+            title={
+              isValid
+                ? t.save
+                : config.language === 'zh-TW' 
+                  ? `請調整至 100% (目前 ${totalRatio}%)`
+                  : `Adjust to 100% (current ${totalRatio}%)`
+            }
+            onPress={handleSave}
+            variant="primary"
+            size="large"
+            disabled={!isValid}
+            style={{ width: '100%' }}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -231,97 +376,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  safeArea: {
+  scroll: {
     flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   backButton: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    marginRight: 8,
   },
   backIcon: {
     fontSize: 24,
+    fontWeight: '400',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
     flex: 1,
-    textAlign: 'center',
   },
-  autoButton: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
+  rightActionContainer: {
+    minWidth: 60,
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    borderRadius: 12,
   },
-  autoButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+  subtitle: {
+    fontSize: 11,
+    marginHorizontal: 16,
+    marginBottom: 8,
   },
-  scrollView: {
-    flex: 1,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 24,
   },
   infoCard: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 0,
+    marginBottom: 10,
     borderWidth: 1,
   },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
   infoText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 16,
   },
   totalCard: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 12,
+    borderRadius: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 14,
+    borderWidth: 1,
   },
   totalLabel: {
-    fontSize: 14,
-    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: '500',
   },
   totalValue: {
-    fontSize: 36,
+    fontSize: 26,
     fontWeight: '700',
   },
-  totalValid: {
-    color: '#4cd964',
-  },
-  totalInvalid: {
-    color: '#ff3b30',
-  },
   passbooksList: {
-    marginHorizontal: 16,
-    marginTop: 16,
+    marginTop: 0,
   },
   passbookItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 12,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   passbookLeft: {
     flexDirection: 'row',
@@ -329,47 +471,47 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   colorIndicator: {
-    width: 12,
-    height: 40,
-    borderRadius: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
+  },
+  passbookPhoto: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     marginRight: 12,
   },
   passbookName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   ratioInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    minWidth: 70,
   },
-  input: {
-    fontSize: 20,
-    fontWeight: '700',
-    width: 50,
+  ratioInputText: {
+    fontSize: 15,
+    fontWeight: '600',
+    width: 36,
     textAlign: 'right',
-    paddingVertical: 8,
+    paddingVertical: 2,
   },
   percentText: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: 4,
+    fontSize: 15,
+    fontWeight: '500',
+    marginLeft: 2,
   },
-  saveButton: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
+  saveButtonContainer: {
+    marginTop: 20,
+    marginBottom: 8,
     alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
+    paddingHorizontal: 8,
   },
   loadingText: {
     fontSize: 14,
@@ -381,13 +523,10 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 8,
   },
   emptySubtext: {
-    fontSize: 14,
-  },
-  bottomSpacer: {
-    height: 40,
+    fontSize: 12,
   },
 });

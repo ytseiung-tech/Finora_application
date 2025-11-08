@@ -5,13 +5,13 @@ import { AppConfig, translations } from '../config/app.config';
 interface AppContextType {
   config: AppConfig;
   updateLanguage: (language: 'en' | 'zh-TW') => Promise<void>;
-  updateTheme: (theme: 'light' | 'dark') => Promise<void>;
+  updateTheme: (theme: 'mistBlue' | 'lavenderSmoke' | 'roseDust' | 'oliveGray' | 'sandBeige' | 'seafoamGreen' | 'cloudGray' | 'plumNight' | 'mintFrost' | 'coralClay' | 'sageGreen' | 'denimBlue' | 'mochaCream' | 'tealOcean' | 'amberDawn' | 'charcoalViolet' | 'icePink' | 'skyGray' | 'forestShadow' | 'inkBlack') => Promise<void>;
   t: (key: string) => string;
 }
 
 const defaultConfig: AppConfig = {
   language: 'zh-TW',
-  theme: 'dark',
+  theme: 'mistBlue',
 };
 
 const AppContext = createContext<AppContextType>({
@@ -56,7 +56,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await saveConfig({ ...config, language });
   };
 
-  const updateTheme = async (theme: 'light' | 'dark') => {
+  const updateTheme = async (theme: 'mistBlue' | 'lavenderSmoke' | 'roseDust' | 'oliveGray' | 'sandBeige' | 'seafoamGreen' | 'cloudGray' | 'plumNight' | 'mintFrost' | 'coralClay' | 'sageGreen' | 'denimBlue' | 'mochaCream' | 'tealOcean' | 'amberDawn' | 'charcoalViolet' | 'icePink' | 'skyGray' | 'forestShadow' | 'inkBlack') => {
     await saveConfig({ ...config, theme });
   };
 

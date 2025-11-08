@@ -1,15 +1,12 @@
 // App Configuration
 export interface AppConfig {
   language: 'en' | 'zh-TW';
-  theme: 'light' | 'dark';
+  theme: 'mistBlue' | 'lavenderSmoke' | 'roseDust' | 'oliveGray' | 'sandBeige' | 'seafoamGreen' | 'cloudGray' | 'plumNight' | 'mintFrost' | 'coralClay' | 'sageGreen' | 'denimBlue' | 'mochaCream' | 'tealOcean' | 'amberDawn' | 'charcoalViolet' | 'icePink' | 'skyGray' | 'forestShadow' | 'inkBlack';
 }
 
 // Tab Icon Configuration
 export interface TabIconConfig {
-  emoji: string;
-  char: string;
-  url?: string;           // Optional URL for custom icon image (需要網路)
-  localSource?: any;      // Optional local image source (完全離線)
+  localSource: any;       // Local image source (完全離線)
 }
 
 // Language translations
@@ -115,14 +112,83 @@ export const translations = {
     adjustRatio: 'Adjust Ratio',
     selectLanguage: 'Select Language',
     selectTheme: 'Select Theme',
-    lightMode: 'Light Mode',
-    darkMode: 'Dark Mode',
+    mistBlue: 'Mist Blue',
+    lavenderSmoke: 'Lavender Smoke',
+    roseDust: 'Rose Dust',
+    oliveGray: 'Olive Gray',
+    sandBeige: 'Sand Beige',
+    seafoamGreen: 'Seafoam Green',
+    cloudGray: 'Cloud Gray',
+    plumNight: 'Plum Night',
+    mintFrost: 'Mint Frost',
+    coralClay: 'Coral Clay',
+    sageGreen: 'Sage Green',
+    denimBlue: 'Denim Blue',
+    mochaCream: 'Mocha Cream',
+    tealOcean: 'Teal Ocean',
+    amberDawn: 'Amber Dawn',
+    charcoalViolet: 'Charcoal Violet',
+    icePink: 'Ice Pink',
+    skyGray: 'Sky Gray',
+    forestShadow: 'Forest Shadow',
+    inkBlack: 'Ink Black',
     clearDataTitle: 'Clear Data',
     clearDataMessage: 'Are you sure you want to clear all transaction data? This action cannot be undone!',
     allDataCleared: 'All data has been cleared',
     aboutFinora: 'About Finora',
     aboutMessage: 'Finora App v1.0.0\n\nAn app to help you manage your finances\n\nDeveloped by Serelix Studio Team\nWebsite: www.serelix.xyz\n\n© 2025 Serelix Studio',
     ok: 'OK',
+    
+    // Custom Theme Screens
+    customTheme: 'Custom Theme',
+    myThemes: 'My Themes',
+    submittedThemes: 'Submitted Themes',
+    themeProposals: 'Theme Proposals',
+    createYourOwn: 'Create your own style',
+    viewSavedThemes: 'View saved themes',
+    checkReviewStatus: 'Check review status',
+    createTheme: 'Create Theme',
+    saveTheme: 'Save Theme',
+    submitForReview: 'Submit for Review',
+    resetColors: 'Reset Colors',
+    themeName: 'Theme Name',
+    themeNameRequired: 'Theme name is required',
+    themeEmoji: 'Theme Emoji',
+    emojiOptional: 'Emoji (Optional)',
+    colorPalette: 'Color Palette',
+    background: 'Background',
+    cardColor: 'Card',
+    cardAltColor: 'Card Alt',
+    glassColor: 'Glass',
+    textColor: 'Text',
+    textSecondaryColor: 'Secondary Text',
+    primaryColor: 'Primary',
+    primarySoftColor: 'Primary Soft',
+    accentColor: 'Accent',
+    borderColor: 'Border',
+    bottomBarColor: 'Bottom Bar',
+    successColor: 'Success',
+    errorColor: 'Error',
+    preview: 'Preview',
+    themeSaved: 'Theme saved successfully!',
+    themeSaveFailed: 'Failed to save theme',
+    themeSubmitted: 'Thank you for your submission! We will review your theme.',
+    themeSubmitFailed: 'Failed to submit, please try again',
+    ensureValidColors: 'Please ensure all colors are valid',
+    deleteTheme: 'Delete Theme',
+    deleteThemeConfirm: 'Are you sure you want to delete "{name}"?',
+    themeDeleted: 'Theme deleted',
+    applyTheme: 'Apply Theme',
+    applyThemeComingSoon: 'Custom theme application coming soon!',
+    noSavedThemes: 'No saved themes yet',
+    noSubmittedThemes: 'No submitted themes yet',
+    createAndSubmit: 'Create a theme and submit it for review!',
+    pending: 'Pending',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    reviewPending: '⏳ Your theme is under review, please wait',
+    submit: 'Submit',
+    submitting: 'Submitting...',
     
     // Ratio Settings Screen
     ratioSettingsTitle: 'Ratio Settings',
@@ -234,14 +300,83 @@ export const translations = {
     adjustRatio: '調整比例',
     selectLanguage: '選擇語言',
     selectTheme: '選擇主題',
-    lightMode: '淺色模式',
-    darkMode: '深色模式',
+    mistBlue: '霧藍',
+    lavenderSmoke: '煙燻薰衣草',
+    roseDust: '玫瑰塵',
+    oliveGray: '橄欖灰',
+    sandBeige: '沙米色',
+    seafoamGreen: '海泡綠',
+    cloudGray: '雲灰',
+    plumNight: '李紫夜',
+    mintFrost: '薄荷霜',
+    coralClay: '珊瑚陶',
+    sageGreen: '鼠尾草綠',
+    denimBlue: '丹寧藍',
+    mochaCream: '摩卡奶油',
+    tealOcean: '青綠海',
+    amberDawn: '琥珀晨',
+    charcoalViolet: '炭紫',
+    icePink: '冰粉',
+    skyGray: '天空灰',
+    forestShadow: '森林影',
+    inkBlack: '墨黑',
     clearDataTitle: '清除資料',
     clearDataMessage: '確定要清除所有記帳資料嗎？此操作無法撤銷！',
     allDataCleared: '所有資料已清除',
     aboutFinora: '關於 Finora',
     aboutMessage: 'Finora App v1.0.0\n\n幫助您管理財務的應用程式\n\nSerelix Studio Team 開發\n官網: www.serelix.xyz\n\n© 2025 Serelix Studio',
     ok: '確定',
+    
+    // Custom Theme Screens
+    customTheme: '自訂主題',
+    myThemes: '我的主題',
+    submittedThemes: '提交的主題',
+    themeProposals: '提交的主題',
+    createYourOwn: '創造你的專屬風格',
+    viewSavedThemes: '查看已儲存的主題',
+    checkReviewStatus: '查看審核狀態',
+    createTheme: '創建主題',
+    saveTheme: '儲存主題',
+    submitForReview: '提交審核',
+    resetColors: '重置顏色',
+    themeName: '主題名稱',
+    themeNameRequired: '請輸入主題名稱',
+    themeEmoji: '主題圖示',
+    emojiOptional: '圖示（選填）',
+    colorPalette: '調色盤',
+    background: '背景色',
+    cardColor: '卡片色',
+    cardAltColor: '卡片輔色',
+    glassColor: '玻璃色',
+    textColor: '文字色',
+    textSecondaryColor: '次要文字色',
+    primaryColor: '主色',
+    primarySoftColor: '主色柔和',
+    accentColor: '強調色',
+    borderColor: '邊框色',
+    bottomBarColor: '底欄色',
+    successColor: '成功色',
+    errorColor: '錯誤色',
+    preview: '預覽',
+    themeSaved: '主題儲存成功！',
+    themeSaveFailed: '儲存失敗',
+    themeSubmitted: '感謝您的投稿！我們會審核您的主題。',
+    themeSubmitFailed: '投稿失敗，請稍後再試',
+    ensureValidColors: '請確認所有顏色格式正確',
+    deleteTheme: '刪除主題',
+    deleteThemeConfirm: '確定要刪除「{name}」嗎？',
+    themeDeleted: '主題已刪除',
+    applyTheme: '套用主題',
+    applyThemeComingSoon: '自訂主題功能尚未完成，敬請期待！',
+    noSavedThemes: '尚未儲存任何主題',
+    noSubmittedThemes: '尚未提交任何主題',
+    createAndSubmit: '創建一個主題並提交審核吧！',
+    pending: '審核中',
+    approved: '已通過',
+    rejected: '未通過',
+    reviewPending: '⏳ 您的主題正在審核中，請耐心等候',
+    submit: '提交',
+    submitting: '提交中...',
     
     // Ratio Settings Screen
     ratioSettingsTitle: '比例設定',
@@ -254,31 +389,21 @@ export const translations = {
   },
 };
 
-// Tab icons with different styles
+// Tab icons - using local PNG icons only
 export const tabIcons: Record<string, TabIconConfig> = {
   home: {
-    emoji: '🏠',
-    char: '⌂',
-    localSource: require('../../assets/icons/home.png'), // ✅ 本地圖示（完全離線）
+    localSource: require('../../assets/icons/home.png'),
   },
   check: {
-    emoji: '📖',
-    char: '☰',
-    localSource: require('../../assets/icons/passbook.png'), // ✅ 本地圖示
+    localSource: require('../../assets/icons/passbook.png'),
   },
   add: {
-    emoji: '➕',
-    char: '+',
-    localSource: require('../../assets/icons/more.png'), // ✅ 本地圖示
+    localSource: require('../../assets/icons/more.png'),
   },
   statistics: {
-    emoji: '📊',
-    char: '≡',
-    localSource: require('../../assets/icons/bar-chart.png'), // ✅ 本地圖示
+    localSource: require('../../assets/icons/bar-chart.png'),
   },
   settings: {
-    emoji: '⚙️',
-    char: '⚙',
-    localSource: require('../../assets/icons/settings.png'), // ✅ 本地圖示
+    localSource: require('../../assets/icons/settings.png'),
   },
 };

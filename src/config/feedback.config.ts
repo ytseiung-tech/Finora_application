@@ -8,7 +8,10 @@ export const FEEDBACK_CONFIG = {
   // 2. 選擇一個頻道 → 編輯頻道 → 整合 → Webhooks
   // 3. 創建 Webhook 並複製 URL
   // 4. 將 URL 貼到下方
-  DISCORD_WEBHOOK_URL: 'https://discord.com/api/webhooks/1428695906668253195/43w9w6dwZr1W8fB-mpji9cyXpYutDhC-CMwJOPrapwOb30-VEtMw210RwA-yHNXk-E3z',
+  DISCORD_WEBHOOK_URL: 'https://discord.com/api/webhooks/1430931576291721318/sopbs6D6MAQLntuI3mJQ0rqVcmKyzi-rPcabPcjIN5-10t3h9OVzcuCroThdtFCL3KFn',
+  
+  // 主題投稿 Webhook URL
+  THEME_SUBMISSION_WEBHOOK_URL: 'https://discord.com/api/webhooks/1430931371572072490/kUcZyZy0T7jAsdTUj3Lk0gwD4af5L2ahcHBTSRA88nypw4P7G8cOooA9ViHGedB0yZcN',
   
   // 反饋接收 Email
   FEEDBACK_EMAIL: 'serelixstudio@gmail.com',
@@ -25,6 +28,7 @@ export const DISCORD_COLORS = {
   FEEDBACK: 0x19a2e6,    // 藍色 - 一般反饋
   BUG_REPORT: 0xff3b30,  // 紅色 - 錯誤回報
   SUGGESTION: 0x4cd964,  // 綠色 - 功能建議
+  THEME_SUBMISSION: 0x9333ea,  // 紫色 - 主題投稿
 };
 
 // 反饋類型

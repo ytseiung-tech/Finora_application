@@ -1,4 +1,17 @@
 export const formatCurrency = (amount: number): string => {
+  const absAmount = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+  
+  // If amount is >= 10000, use k format
+  if (absAmount >= 10000) {
+    const thousands = absAmount / 1000;
+    const formatted = thousands >= 100 
+      ? Math.round(thousands).toString() 
+      : thousands.toFixed(1);
+    return `${sign}$${formatted}k`;
+  }
+  
+  // Otherwise use regular format
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -66,5 +79,31 @@ export const formatAmount = (amount: number, threshold: number = 100000): string
  */
 export const formatCurrencyCompact = (amount: number, threshold: number = 100000): string => {
   return `NT$ ${formatAmount(amount, threshold)}`;
+};
+
+/**
+ * Format numbers with compact notation (k, M, B)
+ * @param num - The number to format
+ * @returns Formatted string (e.g., "100k", "1.5M", "3.5B")
+ */
+export const formatCompactNumber = (num: number): string => {
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return num.toString();
+};
+
+/**
+ * Format numbers with compact notation using Intl.NumberFormat
+ * Supports locale-based formatting (e.g., "1.5M" in English, "150萬" in Chinese)
+ * @param num - The number to format
+ * @param locale - The locale to use (default: 'en-US')
+ * @returns Formatted string
+ */
+export const formatCompact = (num: number, locale: string = 'en-US'): string => {
+  return new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(num);
 };
 

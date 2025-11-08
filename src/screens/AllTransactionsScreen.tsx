@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,6 +15,7 @@ import { Passbook } from '../models/Passbook';
 import { useApp } from '../context/AppContext';
 import { translations } from '../config/app.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { formatCompactNumber } from '../utils/formatting';
 
 interface AllTransactionsScreenProps {
   navigation: any;
@@ -22,7 +24,7 @@ interface AllTransactionsScreenProps {
 export const AllTransactionsScreen: React.FC<AllTransactionsScreenProps> = ({ navigation }) => {
   const { config } = useApp();
   const t = translations[config.language];
-  const theme = THEME_COLORS[config.theme];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
 
@@ -52,6 +54,9 @@ export const AllTransactionsScreen: React.FC<AllTransactionsScreenProps> = ({ na
   );
 
   const formatCurrency = (amount: number) => {
+    if (Math.abs(amount) >= 100000) {
+      return `$${formatCompactNumber(amount)}`;
+    }
     return `$${amount.toFixed(2)}`;
   };
 
@@ -75,11 +80,19 @@ export const AllTransactionsScreen: React.FC<AllTransactionsScreenProps> = ({ na
         activeOpacity={0.7}
       >
         <View style={[styles.transactionItem, { backgroundColor: theme.card }]}>
-          <View style={[styles.transactionIcon, { backgroundColor: iconColor }]}>
-            <Text style={styles.transactionIconText}>
-              {transaction.isIncome ? '↑' : '↓'}
-            </Text>
-          </View>
+          {passbook?.photoUri ? (
+            <Image 
+              source={{ uri: passbook.photoUri }} 
+              style={styles.transactionIcon}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.transactionIcon, { backgroundColor: iconColor }]}>
+              <Text style={styles.transactionIconText}>
+                {transaction.isIncome ? '↓' : '↑'}
+              </Text>
+            </View>
+          )}
           
           <View style={styles.transactionInfo}>
             <Text 
@@ -111,7 +124,7 @@ export const AllTransactionsScreen: React.FC<AllTransactionsScreenProps> = ({ na
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: theme.cardSecondary }]}
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Text style={[styles.backIcon, { color: theme.text }]}>←</Text>
@@ -125,9 +138,9 @@ export const AllTransactionsScreen: React.FC<AllTransactionsScreenProps> = ({ na
             {transactions.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                  {config.language === 'zh-TW' ? '尚無交易記錄' : 'No transactions yet'}
+                  {config.language === 'zh-TW' ? '暫無交易紀錄' : 'No transactions yet'}
                 </Text>
-                <Text style={[styles.emptySubtext, { color: theme.textTertiary }]}>
+                <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
                   {config.language === 'zh-TW' ? '點擊下方「新增」按鈕開始記帳' : 'Tap "Add" to start tracking'}
                 </Text>
               </View>
@@ -159,16 +172,15 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backIcon: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '400',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     flex: 1,
     textAlign: 'center',
@@ -252,3 +264,4 @@ const styles = StyleSheet.create({
     height: 100,
   },
 });
+

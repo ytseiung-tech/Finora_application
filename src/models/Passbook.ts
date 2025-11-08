@@ -2,6 +2,7 @@ export interface Passbook {
   id: string;
   name: string;
   color: string;
+  photoUri?: string;      // Optional photo URI for passbook
   balance: number;
   isActive: boolean;
   ratio?: number; // Allocation ratio (percentage)
@@ -12,18 +13,21 @@ export interface Passbook {
 export interface CreatePassbookRequest {
   name: string;
   color: string;
+  photoUri?: string;
 }
 
 export interface UpdatePassbookRequest {
   id: string;
   name?: string;
   color?: string;
+  photoUri?: string;
   isActive?: boolean;
   ratio?: number;
 }
 
-// Morandi color palette matching iOS/Android
+// Morandi color palette matching iOS/Android with transparent option
 export const MORANDI_COLORS = {
+  transparent: 'transparent',
   primaryBlue: '#7B68EE',
   sageGreen: '#87A96B',
   dustyPurple: '#9A8194',

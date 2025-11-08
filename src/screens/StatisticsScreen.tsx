@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,6 +14,8 @@ import { DataService } from '../services/DataService';
 import { useApp } from '../context/AppContext';
 import { translations } from '../config/app.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassCard } from '../components/GlassCard';
+import { formatCompactNumber } from '../utils/formatting';
 
 interface StatisticsScreenProps {
   navigation: any;
@@ -41,13 +44,22 @@ interface AccountData {
 export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }) => {
   const { config } = useApp();
   const t = translations[config.language];
-  const theme = THEME_COLORS[config.theme];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
+  
+  // Helper function to format amounts with compact notation
+  const formatAmount = (amount: number) => {
+    if (Math.abs(amount) >= 100000) {
+      return `NT$ ${formatCompactNumber(amount)}`;
+    }
+    return `NT$ ${amount.toLocaleString()}`;
+  };
+  
   const [selectedAccount, setSelectedAccount] = useState('all');
   const [accounts, setAccounts] = useState<AccountData[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [dailyIncomeData, setDailyIncomeData] = useState<DailyData[]>([]);
   const [dailyExpenseData, setDailyExpenseData] = useState<DailyData[]>([]);
-  const [selectedDateIndex, setSelectedDateIndex] = useState(29); // 預設顯示最後一天（今天）
+  const [selectedDateIndex, setSelectedDateIndex] = useState(29); // 陣列第30個元素，也就是今天
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -193,7 +205,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
 
       // Add "All Accounts" option at the beginning
       const accountOptions = [
-        { id: 'all', name: t.allAccounts, totalAmount: 0, percentage: 0, color: '#19a2e6' },
+        { id: 'all', name: t.allAccounts, totalAmount: 0, percentage: 0, color: '#7B68EE' },
         ...accountStats
       ];
 
@@ -211,12 +223,6 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: theme.text }]}>{t.statistics}</Text>
-          <TouchableOpacity 
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Text style={[styles.settingsIcon, { color: theme.text }]}>⚙️</Text>
-          </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -243,49 +249,62 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
           </ScrollView>
 
           {/* Monthly Income vs Expenses Chart */}
-          <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Text style={[styles.chartTitle, { color: theme.text }]}>{t.monthlyIncomeVsExpenses}</Text>
-            <Text style={[styles.chartValue, { color: theme.text }]}>NT$ {(totalIncome - totalExpenses).toLocaleString()}</Text>
-            <View style={styles.chartSubtitle}>
-              <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>{t.netBalance}</Text>
-              <Text style={[styles.chartPercentage, { color: theme.success }]}>
-                {totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100).toFixed(1) : 0}%
-              </Text>
-            </View>
-            {loading ? (
-              <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t.loading}</Text>
-            ) : (
-              <View style={styles.barChart}>
-                {monthlyData.map((data, index) => (
-                  <View key={index} style={styles.barContainer}>
-                    <View style={styles.barGroup}>
-                      <View 
-                        style={[
-                          styles.bar,
-                          { backgroundColor: theme.success },
-                          { height: `${(data as any).incomePercent || 0}%` }
-                        ]} 
-                      />
-                      <View 
-                        style={[
-                          styles.bar,
-                          { backgroundColor: theme.error },
-                          { height: `${(data as any).expensesPercent || 0}%` }
-                        ]} 
-                      />
-                    </View>
-                    <Text style={[styles.barLabel, { color: theme.textSecondary }]}>{data.month}</Text>
-                  </View>
-                ))}
+          <View style={styles.chartCardWrapper}>
+            <GlassCard
+              variant="dark"
+              borderRadius={20}
+              padding={20}
+              margin={0}
+            >
+              <Text style={[styles.chartTitle, { color: theme.text }]}>{t.monthlyIncomeVsExpenses}</Text>
+              <Text style={[styles.chartValue, { color: theme.text }]}>{formatAmount(totalIncome - totalExpenses)}</Text>
+              <View style={styles.chartSubtitle}>
+                <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>{t.netBalance}</Text>
+                <Text style={[styles.chartPercentage, { color: theme.success }]}>
+                  {totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100).toFixed(1) : 0}%
+                </Text>
               </View>
-            )}
+              {loading ? (
+                <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t.loading}</Text>
+              ) : (
+                <View style={styles.barChart}>
+                  {monthlyData.map((data, index) => (
+                    <View key={index} style={styles.barContainer}>
+                      <View style={styles.barGroup}>
+                        <View 
+                          style={[
+                            styles.bar,
+                            { backgroundColor: theme.success },
+                            { height: `${(data as any).incomePercent || 0}%` }
+                          ]} 
+                        />
+                        <View 
+                          style={[
+                            styles.bar,
+                            { backgroundColor: theme.error },
+                            { height: `${(data as any).expensesPercent || 0}%` }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={[styles.barLabel, { color: theme.textSecondary }]}>{data.month}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </GlassCard>
           </View>
 
           {/* Daily Transaction Trend - Single Day View */}
-          <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Text style={[styles.chartTitle, { color: theme.text }]}>
-              {config.language === 'zh-TW' ? '單日分析' : 'Daily Analysis'}
-            </Text>
+          <View style={styles.chartCardWrapper}>
+            <GlassCard
+              variant="dark"
+              borderRadius={20}
+              padding={20}
+              margin={0}
+            >
+              <Text style={[styles.chartTitle, { color: theme.text }]}>
+                {config.language === 'zh-TW' ? '每日分析' : 'Daily Analysis'}
+              </Text>
             {loading ? (
               <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t.loading}</Text>
             ) : dailyIncomeData.length > 0 ? (
@@ -293,12 +312,12 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                 {/* Date Navigation */}
                 <View style={styles.dateNavigation}>
                   <TouchableOpacity
-                    style={[styles.navButton, { backgroundColor: theme.backgroundSecondary }]}
+                    style={[styles.navButton, { backgroundColor: theme.cardAlt }]}
                     onPress={() => setSelectedDateIndex(Math.max(0, selectedDateIndex - 1))}
                     disabled={selectedDateIndex === 0}
                   >
                     <Text style={[styles.navButtonText, { 
-                      color: selectedDateIndex === 0 ? theme.textTertiary : theme.text 
+                      color: selectedDateIndex === 0 ? theme.textSecondary : theme.text 
                     }]}>←</Text>
                   </TouchableOpacity>
                   
@@ -317,12 +336,12 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                   </View>
                   
                   <TouchableOpacity
-                    style={[styles.navButton, { backgroundColor: theme.backgroundSecondary }]}
+                    style={[styles.navButton, { backgroundColor: theme.cardAlt }]}
                     onPress={() => setSelectedDateIndex(Math.min(29, selectedDateIndex + 1))}
                     disabled={selectedDateIndex === 29}
                   >
                     <Text style={[styles.navButtonText, { 
-                      color: selectedDateIndex === 29 ? theme.textTertiary : theme.text 
+                      color: selectedDateIndex === 29 ? theme.textSecondary : theme.text 
                     }]}>→</Text>
                   </TouchableOpacity>
                 </View>
@@ -333,7 +352,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                     <View style={styles.legendContainer}>
                       <View style={[styles.legendDot, { backgroundColor: theme.success }]} />
                       <Text style={[styles.legendText, { color: theme.textSecondary }]}>
-                        {config.language === 'zh-TW' ? '收入' : 'Income'}
+                        {config.language === 'zh-TW' ? '?嗅' : 'Income'}
                       </Text>
                     </View>
                     <Text style={[styles.summaryAmount, { color: theme.success }]}>
@@ -347,7 +366,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                     <View style={styles.legendContainer}>
                       <View style={[styles.legendDot, { backgroundColor: theme.error }]} />
                       <Text style={[styles.legendText, { color: theme.textSecondary }]}>
-                        {config.language === 'zh-TW' ? '支出' : 'Expense'}
+                        {config.language === 'zh-TW' ? '?臬' : 'Expense'}
                       </Text>
                     </View>
                     <Text style={[styles.summaryAmount, { color: theme.error }]}>
@@ -358,11 +377,11 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
 
                 {/* Net Balance */}
                 <View style={[styles.netBalanceCard, { 
-                  backgroundColor: theme.backgroundSecondary,
+                  backgroundColor: theme.cardAlt,
                   borderColor: theme.border 
                 }]}>
                   <Text style={[styles.netBalanceLabel, { color: theme.textSecondary }]}>
-                    {config.language === 'zh-TW' ? '當日淨額' : 'Daily Net'}
+                    {config.language === 'zh-TW' ? '?嗆瘛券?' : 'Daily Net'}
                   </Text>
                   <Text style={[styles.netBalanceAmount, { 
                     color: (dailyIncomeData[selectedDateIndex]?.amount || 0) - (dailyExpenseData[selectedDateIndex]?.amount || 0) >= 0 
@@ -379,13 +398,14 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                 {config.language === 'zh-TW' ? '無數據' : 'No Data'}
               </Text>
             )}
+            </GlassCard>
           </View>
 
           {/* Annual Totals by Account */}
           {selectedAccount === 'all' && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>{t.totalsByAccount}</Text>
-              <Text style={[styles.sectionValue, { color: theme.text }]}>NT$ {totalIncome.toLocaleString()}</Text>
+              <Text style={[styles.sectionValue, { color: theme.text }]}>{formatAmount(totalIncome)}</Text>
               <View style={styles.chartSubtitle}>
                 <Text style={[styles.chartLabel, { color: theme.textSecondary }]}>{t.totalIncome}</Text>
                 <Text style={[styles.chartPercentage, { color: theme.success }]}>
@@ -418,24 +438,45 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
           )}
 
           {/* Key Metrics */}
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>{config.language === 'zh-TW' ? '關鍵指標' : 'Key Metrics'}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{config.language === 'zh-TW' ? '???' : 'Key Metrics'}</Text>
           <View style={styles.metricsContainer}>
-            <View style={[styles.metricCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.metricLabel, { color: theme.text }]}>{t.totalIncome}</Text>
-              <Text style={[styles.metricValue, { color: theme.text }]}>NT$ {totalIncome.toLocaleString()}</Text>
+            <View style={styles.metricCardWrapper}>
+              <GlassCard
+                variant="dark"
+                borderRadius={16}
+                padding={16}
+                margin={0}
+              >
+                <Text style={[styles.metricLabel, { color: theme.text }]}>{t.totalIncome}</Text>
+                <Text style={[styles.metricValue, { color: theme.text }]}>{formatAmount(totalIncome)}</Text>
+              </GlassCard>
             </View>
-            <View style={[styles.metricCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.metricLabel, { color: theme.text }]}>{t.totalExpense}</Text>
-              <Text style={[styles.metricValue, { color: theme.text }]}>NT$ {totalExpenses.toLocaleString()}</Text>
+            <View style={styles.metricCardWrapper}>
+              <GlassCard
+                variant="dark"
+                borderRadius={16}
+                padding={16}
+                margin={0}
+              >
+                <Text style={[styles.metricLabel, { color: theme.text }]}>{t.totalExpense}</Text>
+                <Text style={[styles.metricValue, { color: theme.text }]}>{formatAmount(totalExpenses)}</Text>
+              </GlassCard>
             </View>
-            <View style={[styles.metricCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.metricLabel, { color: theme.text }]}>{t.netBalance}</Text>
-              <Text style={[
-                styles.metricValue,
-                { color: (totalIncome - totalExpenses) >= 0 ? theme.success : theme.error }
-              ]}>
-                NT$ {(totalIncome - totalExpenses).toLocaleString()}
-              </Text>
+            <View style={styles.metricCardWrapper}>
+              <GlassCard
+                variant="dark"
+                borderRadius={16}
+                padding={16}
+                margin={0}
+              >
+                <Text style={[styles.metricLabel, { color: theme.text }]}>{t.netBalance}</Text>
+                <Text style={[
+                  styles.metricValue,
+                  { color: (totalIncome - totalExpenses) >= 0 ? theme.success : theme.error }
+                ]}>
+                  {formatAmount(totalIncome - totalExpenses)}
+                </Text>
+              </GlassCard>
             </View>
           </View>
 
@@ -456,15 +497,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 12,
     position: 'relative',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.015,
+    flex: 1,
+    textAlign: 'left',
   },
   settingsButton: {
     position: 'absolute',
@@ -472,7 +515,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   settingsIcon: {
-    fontSize: 24,
+    width: 24,
+    height: 24,
   },
   scrollView: {
     flex: 1,
@@ -504,6 +548,10 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 12,
     borderWidth: 1,
+  },
+  chartCardWrapper: {
+    marginHorizontal: 16,
+    marginVertical: 12,
   },
   chartTitle: {
     fontSize: 16,
@@ -715,6 +763,10 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 8,
   },
+  metricCardWrapper: {
+    flex: 1,
+    minWidth: 140,
+  },
   metricLabel: {
     fontSize: 16,
     fontWeight: '500',
@@ -727,3 +779,4 @@ const styles = StyleSheet.create({
     height: 100,
   },
 });
+

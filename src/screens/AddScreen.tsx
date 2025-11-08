@@ -10,15 +10,19 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { DataService } from '../services/DataService';
 import { Transaction, TransactionCategory } from '../models/Transaction';
 import { Passbook } from '../models/Passbook';
 import { useApp } from '../context/AppContext';
 import { translations } from '../config/app.config';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassButton } from '../components/GlassButton';
+import { GlassCard } from '../components/GlassCard';
 
 interface AddScreenProps {
   navigation: any;
@@ -28,7 +32,9 @@ interface AddScreenProps {
 export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
   const { config } = useApp();
   const t = translations[config.language];
-  const theme = THEME_COLORS[config.theme];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
+  const isDark = ['charcoalViolet', 'forestShadow', 'inkBlack'].includes(config.theme);
+  
   const [isIncome, setIsIncome] = useState(route?.params?.isIncome ?? false);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -36,6 +42,9 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
   const [selectedPassbook, setSelectedPassbook] = useState<string>('');
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
   const [autoAllocate, setAutoAllocate] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     loadPassbooks();
@@ -60,12 +69,12 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
   };
 
   const categories = [
-    { id: 'food', name: t.food, icon: '🍴', category: TransactionCategory.GROCERIES },
-    { id: 'transport', name: t.transport, icon: '🚌', category: TransactionCategory.TRANSPORTATION },
+    { id: 'food', name: t.food, icon: '🍽️', category: TransactionCategory.GROCERIES },
+    { id: 'transport', name: t.transport, icon: '🚗', category: TransactionCategory.TRANSPORTATION },
     { id: 'entertainment', name: t.entertainment, icon: '🎬', category: TransactionCategory.ENTERTAINMENT },
     { id: 'shopping', name: t.shopping, icon: '🛍️', category: TransactionCategory.SHOPPING },
-    { id: 'utilities', name: t.utilities, icon: '📄', category: TransactionCategory.UTILITIES },
-    { id: 'other', name: t.other, icon: '❓', category: TransactionCategory.OTHER_INCOME },
+    { id: 'utilities', name: t.utilities, icon: '💡', category: TransactionCategory.UTILITIES },
+    { id: 'other', name: t.other, icon: '📌', category: TransactionCategory.OTHER_INCOME },
   ];
 
   const handleComplete = async () => {
@@ -127,7 +136,7 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
             passbookId: allocation.passbook.id,
             passbookName: allocation.passbook.name,
             passbookColor: allocation.passbook.color,
-            date: new Date(),
+            date: selectedDate,
             isIncome: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -141,7 +150,7 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
         }
 
         const successMessage = config.language === 'zh-TW'
-          ? `已將 $${totalAmount.toFixed(2)} 按比例分配至 ${allocations.length} 個存摺`
+          ? `已分配 $${totalAmount.toFixed(2)} 按比例分配至 ${allocations.length} 個帳本`
           : `$${totalAmount.toFixed(2)} has been allocated to ${allocations.length} passbook(s) by ratio`;
         Alert.alert(t.success, successMessage, [
           { text: t.ok, onPress: () => navigation.goBack() }
@@ -151,7 +160,7 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
 
       // Single passbook transaction
       if (!selectedPassbook) {
-        const errorMessage = config.language === 'zh-TW' ? '請選擇存摺' : 'Please select a passbook';
+        const errorMessage = config.language === 'zh-TW' ? '請選擇帳本' : 'Please select a passbook';
         Alert.alert(t.errorTitle, errorMessage);
         return;
       }
@@ -161,12 +170,12 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
       const transaction: Transaction = {
         id: Date.now().toString(),
         amount: totalAmount,
-        description: note || (config.language === 'zh-TW' ? '交易' : 'Transaction'),
+        description: note || (config.language === 'zh-TW' ? '交�?' : 'Transaction'),
         // category is now optional, not included
         passbookId: selectedBook?.id || '1',
-        passbookName: selectedBook?.name || (config.language === 'zh-TW' ? '主要帳戶' : 'Main Account'),
-        passbookColor: selectedBook?.color || '#19a2e6',
-        date: new Date(),
+        passbookName: selectedBook?.name || (config.language === 'zh-TW' ? '主�?帳戶' : 'Main Account'),
+        passbookColor: selectedBook?.color || '#7B68EE',
+        date: selectedDate,
         isIncome,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -202,14 +211,7 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity 
-              style={[styles.closeButton, { backgroundColor: theme.cardSecondary }]}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={[styles.closeIcon, { color: theme.text }]}>✕</Text>
-            </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: theme.text }]}>{t.addTransaction}</Text>
-            <View style={styles.spacer} />
           </View>
 
           <ScrollView 
@@ -224,7 +226,7 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
               style={[
                 styles.toggleButton, 
                 { backgroundColor: theme.card, borderColor: theme.border },
-                !isIncome && { backgroundColor: theme.error }
+                !isIncome && [{ backgroundColor: theme.error, borderColor: theme.error, borderWidth: 2 }]
               ]}
               onPress={() => setIsIncome(false)}
             >
@@ -240,7 +242,7 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
               style={[
                 styles.toggleButton, 
                 { backgroundColor: theme.card, borderColor: theme.border },
-                isIncome && { backgroundColor: theme.success }
+                isIncome && [{ backgroundColor: theme.success, borderColor: theme.success, borderWidth: 2 }]
               ]}
               onPress={() => setIsIncome(true)}
             >
@@ -277,70 +279,149 @@ export const AddScreen: React.FC<AddScreenProps> = ({ navigation, route }) => {
             />
           </View>
 
+          {/* Date & Time Picker */}
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            {config.language === 'zh-TW' ? '交易時間' : 'Transaction Time'}
+          </Text>
+          <View style={styles.dateTimeContainer}>
+            <TouchableOpacity
+              style={[styles.dateTimeButton, { backgroundColor: theme.card, borderColor: theme.border }]}
+              onPress={() => setShowDatePicker(!showDatePicker)}
+            >
+              <Text style={[styles.dateTimeLabel, { color: theme.textSecondary }]}>
+                {config.language === 'zh-TW' ? '日期' : 'Date'}
+              </Text>
+              <Text style={[styles.dateTimeValue, { color: theme.text }]}>
+                {selectedDate.toLocaleDateString(config.language === 'zh-TW' ? 'zh-TW' : 'en-US')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.dateTimeButton, { backgroundColor: theme.card, borderColor: theme.border }]}
+              onPress={() => setShowTimePicker(!showTimePicker)}
+            >
+              <Text style={[styles.dateTimeLabel, { color: theme.textSecondary }]}>
+                {config.language === 'zh-TW' ? '時間' : 'Time'}
+              </Text>
+              <Text style={[styles.dateTimeValue, { color: theme.text }]}>
+                {selectedDate.toLocaleTimeString(config.language === 'zh-TW' ? 'zh-TW' : 'en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              textColor={isDark ? '#FFFFFF' : undefined}
+              onChange={(event, date) => {
+                setShowDatePicker(Platform.OS === 'ios');
+                if (date) {
+                  setSelectedDate(date);
+                }
+              }}
+            />
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              textColor={isDark ? '#FFFFFF' : undefined}
+              onChange={(event, date) => {
+                setShowTimePicker(Platform.OS === 'ios');
+                if (date) {
+                  setSelectedDate(date);
+                }
+              }}
+            />
+          )}
+
           {/* Passbook Selector */}
           <Text style={[styles.sectionTitle, { color: theme.text }]}>{t.selectPassbook}</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoriesScroll}
-            contentContainerStyle={styles.categoriesContainer}
-          >
+          <View style={styles.passbookContainer}>
             {passbooks.filter(pb => pb.isActive).map((passbook) => (
               <TouchableOpacity
                 key={passbook.id}
                 style={[
                   styles.passbookChip,
                   { backgroundColor: theme.card, borderColor: theme.border },
-                  selectedPassbook === passbook.id && { borderColor: passbook.color, borderWidth: 2 },
+                  selectedPassbook === passbook.id && { 
+                    borderColor: isIncome ? theme.success : theme.error, 
+                    borderWidth: 1.5 
+                  },
                 ]}
                 onPress={() => setSelectedPassbook(passbook.id)}
               >
-                <View 
-                  style={[
-                    styles.passbookColor, 
-                    { backgroundColor: passbook.color }
-                  ]} 
-                />
+                {passbook.photoUri ? (
+                  <Image
+                    source={{ uri: passbook.photoUri }}
+                    style={styles.passbookPhoto}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View 
+                    style={[
+                      styles.passbookColor, 
+                      { backgroundColor: passbook.color }
+                    ]} 
+                  />
+                )}
                 <Text style={[styles.passbookText, { color: theme.text }]}>{passbook.name}</Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
 
           {/* Auto-allocate Toggle */}
-          <View style={[styles.autoAllocateContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.autoAllocateInfo}>
-              <Text style={[styles.autoAllocateTitle, { color: theme.text }]}>{t.autoAllocate}</Text>
-              <Text style={[styles.autoAllocateSubtitle, { color: theme.textSecondary }]}>
-                {passbooks.filter(pb => pb.isActive && pb.ratio && pb.ratio > 0).length > 0
-                  ? passbooks
-                      .filter(pb => pb.isActive && pb.ratio && pb.ratio > 0)
-                      .map(pb => `${pb.ratio}% ${pb.name}`)
-                      .join(', ')
-                  : t.pleaseSetRatio}
-              </Text>
-            </View>
-            <Switch
-              value={autoAllocate}
-              onValueChange={setAutoAllocate}
-              trackColor={{ false: theme.border, true: theme.primary }}
-              thumbColor="#ffffff"
-            />
+          <View style={styles.autoAllocateWrapper}>
+            <GlassCard
+              variant="dark"
+              borderRadius={16}
+              padding={20}
+              margin={0}
+            >
+              <View style={styles.autoAllocateContent}>
+                <View style={styles.autoAllocateInfo}>
+                  <Text style={[styles.autoAllocateTitle, { color: theme.text }]}>{t.autoAllocate}</Text>
+                  <Text style={[styles.autoAllocateSubtitle, { color: theme.textSecondary }]}>
+                    {passbooks.filter(pb => pb.isActive && pb.ratio && pb.ratio > 0).length > 0
+                      ? passbooks
+                          .filter(pb => pb.isActive && pb.ratio && pb.ratio > 0)
+                          .map(pb => `${pb.ratio}% ${pb.name}`)
+                          .join(', ')
+                      : t.pleaseSetRatio}
+                  </Text>
+                </View>
+                <Switch
+                  value={autoAllocate}
+                  onValueChange={setAutoAllocate}
+                  trackColor={{ false: theme.border, true: theme.primary }}
+                  thumbColor={isDark ? '#F9FAFB' : '#FFFFFF'}
+                />
+              </View>
+            </GlassCard>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: theme.card, borderColor: theme.border }]}
+            <GlassButton
+              title={t.cancel}
               onPress={() => navigation.goBack()}
-            >
-              <Text style={[styles.cancelButtonText, { color: theme.text }]}>{t.cancel}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.completeButton, { backgroundColor: theme.primary }]}
+              variant="secondary"
+              size="large"
+              style={{ flex: 1 }}
+            />
+            <GlassButton
+              title={t.complete}
               onPress={handleComplete}
-            >
-              <Text style={styles.completeButtonText}>{t.complete}</Text>
-            </TouchableOpacity>
+              variant="primary"
+              size="large"
+              style={{ flex: 1 }}
+            />
           </View>
 
           <View style={styles.bottomSpacer} />
@@ -376,12 +457,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     letterSpacing: -0.015,
     flex: 1,
-    textAlign: 'center',
-    paddingRight: 48,
+    textAlign: 'left',
   },
   spacer: {
     width: 48,
@@ -413,7 +493,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   toggleTextActive: {
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   inputContainer: {
     paddingHorizontal: 16,
@@ -441,6 +521,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
   },
+  passbookContainer: {
+    paddingHorizontal: 16,
+    gap: 12,
+    paddingBottom: 12,
+  },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,35 +542,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   categoryText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '500',
   },
   passbookChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    height: 44,
-    paddingHorizontal: 16,
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     backgroundColor: '#293338',
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: 16,
+    borderWidth: 1,
     borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   passbookChipActive: {
-    backgroundColor: '#19a2e6',
-    borderColor: '#ffffff',
+    borderColor: '#FFFFFF',
   },
   passbookColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
+  passbookPhoto: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
   passbookText: {
-    color: '#ffffff',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '600',
   },
   pickerContainer: {
@@ -499,20 +593,32 @@ const styles = StyleSheet.create({
     color: '#9dafb8',
     fontSize: 16,
   },
+  autoAllocateWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  autoAllocateContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   autoAllocateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 16,
     minHeight: 72,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   autoAllocateInfo: {
     flex: 1,
     marginRight: 16,
   },
   autoAllocateTitle: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -521,41 +627,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  dateTimeButton: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  dateTimeLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  dateTimeValue: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  cancelButton: {
-    flex: 1,
-    height: 48,
-    backgroundColor: '#293338',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.015,
-  },
-  completeButton: {
-    flex: 1,
-    height: 48,
-    backgroundColor: '#19a2e6',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completeButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.015,
-  },
   bottomSpacer: {
     height: 20,
   },
 });
+

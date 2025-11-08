@@ -7,20 +7,24 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { DataService } from '../services/DataService';
 import { useApp } from '../context/AppContext';
 import { THEME_COLORS } from '../theme/Colors';
+import { GlassCard } from '../components/GlassCard';
+import { translations } from '../config/app.config';
 
 interface SettingsScreenProps {
   navigation: any;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
-  const { config, updateLanguage, updateTheme, t } = useApp();
-  const theme = THEME_COLORS[config.theme];
+  const { config, updateLanguage, updateTheme } = useApp();
+  const t = translations[config.language];
+  const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
   
   const handleAdjustRatio = () => {
     navigation.navigate('RatioSettings');
@@ -28,8 +32,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
 
   const handleLanguageChange = () => {
     Alert.alert(
-      t('language'),
-      t('selectLanguage'),
+      t.language,
+      t.selectLanguage,
       [
         {
           text: 'English',
@@ -39,45 +43,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
           text: '繁體中文',
           onPress: () => updateLanguage('zh-TW'),
         },
-        { text: t('cancel'), style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
       ]
     );
   };
 
   const handleThemeChange = () => {
-    Alert.alert(
-      t('theme'),
-      t('selectTheme'),
-      [
-        {
-          text: t('lightMode'),
-          onPress: () => updateTheme('light'),
-        },
-        {
-          text: t('darkMode'),
-          onPress: () => updateTheme('dark'),
-        },
-        { text: t('cancel'), style: 'cancel' },
-      ]
-    );
+    navigation.navigate('ThemeSelection');
   };
 
   const handleClearData = async () => {
     Alert.alert(
-      t('clearDataTitle'),
-      t('clearDataMessage'),
+      t.clearDataTitle,
+      t.clearDataMessage,
       [
-        { text: t('cancel'), style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         {
-          text: t('delete'),
+          text: t.delete,
           style: 'destructive',
           onPress: async () => {
             try {
               await DataService.clearAllData();
-              Alert.alert(t('success'), t('allDataCleared'));
+              Alert.alert(t.success, t.allDataCleared);
             } catch (error) {
               console.error('Error clearing data:', error);
-              Alert.alert(t('error'), t('deleteFailed'));
+              Alert.alert(t.error, t.deleteFailed);
             }
           },
         },
@@ -87,8 +77,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
 
   const handleAbout = () => {
     Alert.alert(
-      t('aboutFinora'),
-      t('aboutMessage'),
+      t.aboutFinora,
+      t.aboutMessage,
       [
         {
           text: config.language === 'zh-TW' ? '訪問官網' : 'Visit Website',
@@ -98,7 +88,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
             );
           },
         },
-        { text: t('ok') },
+        { text: t.ok },
       ]
     );
   };
@@ -112,25 +102,35 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>{t('settings')}</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>{t.settings}</Text>
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Glass Card Container */}
-          <View style={[styles.glassCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {/* Manage Passbooks */}
-            <TouchableOpacity 
-              style={styles.settingsItem}
-              onPress={() => navigation.navigate('PassbookManagement')}
+          {/* Main Settings Card */}
+          <View style={styles.settingsCardWrapper}>
+            <GlassCard
+              variant="dark"
+              borderRadius={20}
+              padding={0}
+              margin={0}
             >
-              <View style={styles.settingsItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
-                  <Text style={styles.icon}>💳</Text>
+              {/* Manage Passbooks */}
+              <TouchableOpacity 
+                style={styles.settingsItem}
+                onPress={() => navigation.navigate('PassbookManagement')}
+              >
+                <View style={styles.settingsItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
+                    <Image
+                      source={require('../../assets/setting icon/passbook.png')}
+                      style={[styles.iconImage, { tintColor: theme.primary }]}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t.passbookManagement}</Text>
                 </View>
-                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t('passbookManagement')}</Text>
-              </View>
-              <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
-            </TouchableOpacity>
+                <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+              </TouchableOpacity>
 
             {/* Divider */}
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -142,9 +142,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
             >
               <View style={styles.settingsItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
-                  <Text style={styles.icon}>🎚️</Text>
+                  <Image
+                    source={require('../../assets/setting icon/ratio.png')}
+                    style={[styles.iconImage, { tintColor: theme.primary }]}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t('ratioSettings')}</Text>
+                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t.ratioSettings}</Text>
               </View>
               <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
             </TouchableOpacity>
@@ -159,9 +163,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
             >
               <View style={styles.settingsItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
-                  <Text style={styles.icon}>🌐</Text>
+                  <Image
+                    source={require('../../assets/setting icon/language.png')}
+                    style={[styles.iconImage, { tintColor: theme.primary }]}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t('language')}</Text>
+                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t.language}</Text>
               </View>
               <View style={styles.settingsItemRight}>
                 <Text style={[styles.valueText, { color: theme.textSecondary }]}>
@@ -181,13 +189,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
             >
               <View style={styles.settingsItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
-                  <Text style={styles.icon}>{config.theme === 'dark' ? '🌙' : '☀️'}</Text>
+                  <Image
+                    source={require('../../assets/setting icon/theme.png')}
+                    style={[styles.iconImage, { tintColor: theme.primary }]}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t('theme')}</Text>
+                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t.theme}</Text>
               </View>
               <View style={styles.settingsItemRight}>
                 <Text style={[styles.valueText, { color: theme.textSecondary }]}>
-                  {config.theme === 'dark' ? t('darkMode') : t('lightMode')}
+                  {t[config.theme] || config.theme}
                 </Text>
                 <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
               </View>
@@ -203,26 +215,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
             >
               <View style={styles.settingsItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: theme.error + '26' }]}>
-                  <Text style={styles.iconDanger}>🗑️</Text>
+                  <Image
+                    source={require('../../assets/setting icon/trash.png')}
+                    style={[styles.iconImage, { tintColor: theme.error }]}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={[styles.settingsItemLabelDanger, { color: theme.error }]}>{t('clearData')}</Text>
+                <Text style={[styles.settingsItemLabelDanger, { color: theme.error }]}>{t.clearData}</Text>
               </View>
               <Text style={[styles.chevronDanger, { color: theme.error }]}>›</Text>
             </TouchableOpacity>
+            </GlassCard>
           </View>
 
           {/* About & Feedback Card */}
-          <View style={[styles.glassCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {/* About */}
-            <TouchableOpacity 
+          <View style={styles.settingsCardWrapper}>
+            <GlassCard
+              variant="dark"
+              borderRadius={20}
+              padding={0}
+              margin={0}
+            >
+              {/* About */}
+              <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={handleAbout}
+              onPress={() => navigation.navigate('About')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
-                  <Text style={styles.icon}>ℹ️</Text>
+                  <Image
+                    source={require('../../assets/setting icon/about.png')}
+                    style={[styles.iconImage, { tintColor: theme.primary }]}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t('about')}</Text>
+                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t.about}</Text>
               </View>
               <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
             </TouchableOpacity>
@@ -237,12 +264,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
             >
               <View style={styles.settingsItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: theme.primary + '26' }]}>
-                  <Text style={styles.icon}>💬</Text>
+                  <Image
+                    source={require('../../assets/setting icon/feedback.png')}
+                    style={[styles.iconImage, { tintColor: theme.primary }]}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t('feedback')}</Text>
+                <Text style={[styles.settingsItemLabel, { color: theme.text }]}>{t.feedback}</Text>
               </View>
               <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
             </TouchableOpacity>
+            </GlassCard>
           </View>
 
           {/* App Version */}
@@ -265,14 +297,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.015,
+    textAlign: 'left',
   },
   scrollView: {
     flex: 1,
@@ -283,6 +316,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
+  },
+  settingsCardWrapper: {
+    marginHorizontal: 16,
+    marginTop: 24,
   },
   settingsItem: {
     flexDirection: 'row',
@@ -302,6 +339,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconImage: {
+    width: 24,
+    height: 24,
   },
   icon: {
     fontSize: 20,

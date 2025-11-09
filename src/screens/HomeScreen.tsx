@@ -228,7 +228,7 @@ const createStyles = (theme: typeof THEME_COLORS.mistBlue, isDark: boolean) => S
   
   // Balance Card
   balanceCard: {
-    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : theme.card,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : theme.card,  // 降低深色透明度
     borderRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 20,
@@ -236,12 +236,13 @@ const createStyles = (theme: typeof THEME_COLORS.mistBlue, isDark: boolean) => S
     marginTop: 0,
     marginBottom: 20,
     borderWidth: isDark ? 1 : 0,
-    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
+    borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'transparent',  // 提高邊框對比
     shadowColor: '#000',
-    shadowOpacity: isDark ? 0.4 : 0.05,
-    shadowRadius: isDark ? 12 : 6,
-    shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-    elevation: isDark ? 8 : 2,
+    shadowOpacity: isDark ? 0.28 : 0.05,  // 調整陰影
+    shadowRadius: isDark ? 20 : 6,
+    shadowOffset: { width: 0, height: isDark ? 6 : 2 },
+    elevation: isDark ? 10 : 2,
+    overflow: 'hidden',  // 防止內容溢出
   },
   balanceLabel: {
     fontSize: 14,

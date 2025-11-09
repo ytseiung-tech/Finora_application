@@ -51,9 +51,6 @@ export const ThemeSelectionScreen: React.FC<ThemeSelectionScreenProps> = ({ navi
 
   const handleThemeSelect = async (themeKey: string) => {
     await updateTheme(themeKey as any);
-    setTimeout(() => {
-      navigation.goBack();
-    }, 300);
   };
 
   const getThemeName = (themeKey: string) => {

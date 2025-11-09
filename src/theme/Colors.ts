@@ -302,19 +302,19 @@ export const THEME_COLORS = {
     error: '#DC2626',
   },
 
-  // 16. Charcoal Violet (���� - �`����D����)
+  // 16. Charcoal Violet (深炭紫 - 深色主題優化)
   charcoalViolet: {
-    background: '#1A1625',
-    card: 'rgba(30,26,40,0.96)',
-    cardAlt: 'rgba(35,30,48,0.98)',
-    glass: 'rgba(168,85,247,0.12)',
-    text: '#E5E7EB',
+    background: '#020817',  // 更深的背景
+    card: 'rgba(15,23,42,0.96)',  // 深一點的卡片
+    cardAlt: 'rgba(30,41,59,0.92)',
+    glass: 'rgba(148,163,253,0.06)',  // 玻璃專用色
+    text: '#F9FAFB',
     textSecondary: '#A78BFA',
     primary: '#8B5CF6',
     primarySoft: 'rgba(139,92,246,0.20)',
     accent: '#C084FC',
-    border: 'rgba(168,85,247,0.20)',
-    bottomBar: 'rgba(15,12,24,0.98)',
+    border: 'rgba(148,163,253,0.16)',
+    bottomBar: '#121216',  // 實色底欄
     success: '#22C55E',
     error: '#F97373',
   },
@@ -353,36 +353,36 @@ export const THEME_COLORS = {
     error: '#EF4444',
   },
 
-  // 19. Forest Shadow (�˪L�v - �`����)
+  // 19. Forest Shadow (森林影 - 深色主題)
   forestShadow: {
-    background: '#0F1F14',
-    card: 'rgba(18,30,22,0.96)',
-    cardAlt: 'rgba(22,35,27,0.98)',
-    glass: 'rgba(34,197,94,0.12)',
-    text: '#E5E7EB',
+    background: '#020817',  // 統一深色背景
+    card: 'rgba(15,23,42,0.96)',
+    cardAlt: 'rgba(30,41,59,0.92)',
+    glass: 'rgba(34,197,94,0.06)',  // 降低玻璃透明度
+    text: '#F9FAFB',
     textSecondary: '#9CA3AF',
     primary: '#22C55E',
     primarySoft: 'rgba(34,197,94,0.20)',
     accent: '#4ADE80',
-    border: 'rgba(34,197,94,0.20)',
-    bottomBar: 'rgba(10,15,12,0.98)',
+    border: 'rgba(34,197,94,0.16)',
+    bottomBar: '#121216',  // 實色底欄
     success: '#22C55E',
     error: '#F97373',
   },
 
-  // 20. Ink Black (���� - �²`��D�D)
+  // 20. Ink Black (墨黑 - 最深色主題)
   inkBlack: {
-    background: '#050816',
-    card: 'rgba(10,15,30,0.98)',
-    cardAlt: 'rgba(14,23,42,0.98)',
-    glass: 'rgba(148,163,253,0.10)',
+    background: '#020817',  // 統一深色背景
+    card: 'rgba(15,23,42,0.96)',
+    cardAlt: 'rgba(30,41,59,0.92)',
+    glass: 'rgba(148,163,253,0.06)',  // 降低玻璃透明度
     text: '#F9FAFB',
     textSecondary: '#9CA3AF',
     primary: '#6366F1',
     primarySoft: 'rgba(99,102,241,0.22)',
     accent: '#22C55E',
     border: 'rgba(148,163,253,0.16)',
-    bottomBar: 'rgba(5,8,22,0.98)',
+    bottomBar: '#121216',  // 實色底欄
     success: '#22C55E',
     error: '#F97373',
   },

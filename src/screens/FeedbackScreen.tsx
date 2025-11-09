@@ -198,7 +198,11 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
               text: 'OK',
               onPress: () => {
                 setMessage('');
-                navigation.goBack();
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('Home');
+                }
               },
             },
           ]
@@ -215,7 +219,11 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
               text: 'OK',
               onPress: () => {
                 setMessage('');
-                navigation.goBack();
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('Home');
+                }
               },
             },
           ]
@@ -240,7 +248,13 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('Home');
+              }
+            }}
           >
             <Text style={[styles.backIcon, { color: theme.text }]}>←</Text>
           </TouchableOpacity>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import { THEME_COLORS } from '../theme/Colors';
 
@@ -17,7 +16,7 @@ interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   style,
-  borderRadius = 16,
+  borderRadius = 28,
   padding = 16,
   margin = 8,
   elevation = 4,
@@ -27,104 +26,92 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
   const isDark = ['charcoalViolet', 'forestShadow', 'inkBlack'].includes(config.theme);
 
-  const getGradientColors = (): readonly [string, string, string] => {
-    switch (variant) {
-      case 'light':
-        return isDark
-          ? ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.04)'] as const
-          : ['rgba(255, 255, 255, 0.95)', 'rgba(252, 252, 252, 0.9)', 'rgba(248, 248, 248, 0.85)'] as const;
-      case 'dark':
-        return isDark
-          ? ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.03)'] as const
-          : ['rgba(255, 255, 255, 0.95)', 'rgba(252, 252, 252, 0.9)', 'rgba(248, 248, 248, 0.85)'] as const;
-      case 'primary':
-        return isDark
-          ? ['rgba(99, 102, 241, 0.12)', 'rgba(99, 102, 241, 0.10)', 'rgba(99, 102, 241, 0.08)'] as const
-          : ['rgba(25, 162, 230, 0.25)', 'rgba(25, 162, 230, 0.18)', 'rgba(25, 162, 230, 0.12)'] as const;
-      case 'colored':
-        return isDark
-          ? ['rgba(139, 92, 246, 0.12)', 'rgba(34, 197, 94, 0.10)', 'rgba(99, 102, 241, 0.08)'] as const
-          : ['rgba(123, 104, 238, 0.3)', 'rgba(135, 169, 107, 0.25)', 'rgba(154, 129, 148, 0.2)'] as const;
-      default:
-        return isDark
-          ? ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.03)'] as const
-          : ['rgba(255, 255, 255, 0.95)', 'rgba(252, 252, 252, 0.9)', 'rgba(248, 248, 248, 0.85)'] as const;
+  // Get background color based on variant and theme
+  const getBackgroundColor = () => {
+    if (isDark) {
+      // 深色主題：極低透明度
+      switch (variant) {
+        case 'primary':
+          return 'rgba(99, 102, 241, 0.06)';
+        case 'colored':
+          return 'rgba(139, 92, 246, 0.06)';
+        default:
+          return 'rgba(15, 23, 42, 0.66)';  // 深藍灰，低透明
+      }
+    } else {
+      // 淺色主題
+      switch (variant) {
+        case 'primary':
+          return 'rgba(25, 162, 230, 0.12)';
+        case 'light':
+          return 'rgba(255, 255, 255, 0.92)';
+        default:
+          return 'rgba(255, 255, 255, 0.85)';
+      }
     }
   };
 
   const getBorderColor = () => {
-    if (variant === 'primary') {
-      return isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(25, 162, 230, 0.3)';
+    if (isDark) {
+      return variant === 'primary' 
+        ? 'rgba(99, 102, 241, 0.18)' 
+        : 'rgba(255, 255, 255, 0.08)';
+    } else {
+      return variant === 'primary'
+        ? 'rgba(25, 162, 230, 0.25)'
+        : 'rgba(0, 0, 0, 0.06)';
     }
-    return isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
   };
 
-  const getHighlightColors = (): readonly [string, string] => {
-    return isDark
-      ? ['rgba(255, 255, 255, 0.04)', 'transparent'] as const
-      : ['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.3)'] as const;
-  };
-
-  const gradientColors = getGradientColors();
+  const backgroundColor = getBackgroundColor();
   const borderColor = getBorderColor();
-  const highlightColors = getHighlightColors();
 
-  // Shadow style based on elevation
+  // Shadow style - 只在 shadowWrapper
   const shadowStyle = elevation > 0 ? {
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: elevation / 2,
+      height: elevation * 4.5,
     },
-    shadowOpacity: isDark ? 0.4 : 0.1,
-    shadowRadius: elevation * (isDark ? 1.5 : 1),
-    elevation: elevation,
+    shadowOpacity: isDark ? 0.35 : 0.12,
+    shadowRadius: elevation * 10,
+    elevation: elevation * 5.5,
   } : {};
 
   return (
-    <View style={[styles.container, { margin }, shadowStyle, style]}>
-      <LinearGradient
-        colors={gradientColors}
-        style={[styles.gradient, { borderRadius, padding, borderColor }]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {/* Top highlight for glass reflection */}
-        <LinearGradient
-          colors={highlightColors}
-          style={[styles.topHighlight, { borderTopLeftRadius: borderRadius, borderTopRightRadius: borderRadius }]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        />
-        
-        {/* Content */}
-        <View style={styles.content}>
+    <View style={[styles.shadowWrapper, { borderRadius, margin }, shadowStyle, style]}>
+      <View style={[styles.card, { borderRadius }]}>
+        <View style={[
+          styles.content,
+          {
+            paddingHorizontal: padding,
+            paddingVertical: padding,
+            backgroundColor,
+            borderWidth: 1,
+            borderColor,
+          }
+        ]}>
           {children}
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  // 只有陰影，不能有白底，不能有灰底
+  shadowWrapper: {
+    backgroundColor: 'transparent',  // ★ 確保是透明
   },
-  gradient: {
-    borderWidth: 1,
-    overflow: 'hidden',
-    position: 'relative',
+  
+  // 真正的卡片，裁切內容
+  card: {
+    overflow: 'hidden',              // ★ 切掉內容的邊緣
+    backgroundColor: 'transparent',  // 不要用白
   },
-  topHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '30%',
-    zIndex: 1,
-    pointerEvents: 'none',
-  },
+  
+  // 玻璃內層：只有非常淡的底
   content: {
-    position: 'relative',
-    zIndex: 2,
+    // backgroundColor 在組件中動態設置
   },
 });

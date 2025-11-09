@@ -11,14 +11,16 @@ function AppContent() {
   const isDark = isDarkTheme(config.theme);
 
   return (
-    <View style={{ flex: 1 }}>
+    <>
       <StatusBar 
         style={isDark ? "light" : "dark"} 
-        backgroundColor={theme.background}
+        backgroundColor="transparent"
         translucent 
       />
-      <AppNavigator />
-    </View>
+      <View style={{ flex: 1, backgroundColor: theme.background }}>
+        <AppNavigator />
+      </View>
+    </>
   );
 }
 

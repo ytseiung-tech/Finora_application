@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet, Image, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Context
@@ -43,30 +42,23 @@ const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => {
   const iconConfig = tabIcons[name as keyof typeof tabIcons];
   const iconLocalSource = iconConfig?.localSource;
 
-  // Dynamic gradient colors based on theme
-  const gradientColors = isDark
-    ? ['rgba(25, 162, 230, 0.2)', 'rgba(25, 162, 230, 0.12)', 'transparent'] as const
-    : ['rgba(25, 162, 230, 0.15)', 'rgba(25, 162, 230, 0.08)', 'transparent'] as const;
+  // Clean solid background for selected icon - no glass effect
+  const focusedBackgroundColor = isDark ? '#2D2D35' : '#E9E9F2';
+  
+  // Neutral icon colors
+  const inactiveIconColor = isDark ? '#C9CAD1' : '#8A8A99';
 
   return (
     <View style={[
       styles.tabIconContainer,
-      focused && styles.tabIconFocused
+      focused && [styles.tabIconFocused, { backgroundColor: focusedBackgroundColor }]
     ]}>
-      {focused && (
-        <LinearGradient
-          colors={gradientColors}
-          style={styles.tabIconBackground}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-      )}
       <Image
         source={iconLocalSource}
         style={{
           width: 24,
           height: 24,
-          tintColor: focused ? theme.primary : theme.textSecondary,
+          tintColor: focused ? theme.primary : inactiveIconColor,
           zIndex: 2,
         }}
         resizeMode="contain"
@@ -85,14 +77,18 @@ const TabNavigatorContent = () => {
   const isDark = ['charcoalViolet', 'forestShadow', 'inkBlack'].includes(config.theme);
   const insets = useSafeAreaInsets();
   
-  // Dynamic colors based on theme - 深色主�?使用?�色?�景
+  // Clean, solid colors - no transparency
   const tabBarBackgroundColor = isDark 
-    ? 'rgba(20, 20, 25, 0.98)' 
-    : 'rgba(255, 255, 255, 0.95)';
+    ? '#121216'  // 深色主題：純深灰，OLED 乾淨黑
+    : '#F8F8FA';  // 淺色主題：略灰白，亮但不刺
   
-  const tabBarBorderColor = isDark
-    ? 'rgba(255, 255, 255, 0.15)'
-    : 'rgba(0, 0, 0, 0.06)';
+  // Neutral icon colors
+  const inactiveIconColor = isDark ? '#C9CAD1' : '#8A8A99';
+  
+  // Shadow settings for depth
+  const shadowOpacity = isDark ? 0.6 : 0.04;
+  const shadowRadius = isDark ? 20 : 12;
+  const shadowOffset = isDark ? -6 : -4;
   
   return (
     <Tab.Navigator
@@ -102,14 +98,18 @@ const TabNavigatorContent = () => {
           styles.tabBar, 
           { 
             backgroundColor: tabBarBackgroundColor,
-            borderTopColor: tabBarBorderColor,
-            borderTopWidth: 1,
-            paddingBottom: insets.bottom || (Platform.OS === 'android' ? 10 : 20),
-            height: 70 + (insets.bottom || (Platform.OS === 'android' ? 10 : 20)),
+            borderTopWidth: 0,
+            paddingBottom: insets.bottom || (Platform.OS === 'ios' ? 10 : 8),
+            height: 70 + (insets.bottom || (Platform.OS === 'ios' ? 10 : 8)),
+            shadowColor: '#000',
+            shadowOpacity: shadowOpacity,
+            shadowRadius: shadowRadius,
+            shadowOffset: { width: 0, height: shadowOffset },
+            elevation: isDark ? 12 : 8,
           }
         ],
         tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarInactiveTintColor: inactiveIconColor,
         tabBarShowLabel: false,
         tabBarItemStyle: {
           paddingVertical: 8,
@@ -199,10 +199,8 @@ export const AppNavigator = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
+    position: 'absolute',
+    // Shadow 樣式在 screenOptions 中動態設置
   },
   tabIconContainer: {
     alignItems: 'center',
@@ -213,20 +211,10 @@ const styles = StyleSheet.create({
     minWidth: 48,
     minHeight: 48,
     position: 'relative',
-    overflow: 'hidden',
-  },
-  tabIconBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 16,
-    zIndex: 1,
   },
   tabIconFocused: {
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    // backgroundColor is set dynamically in component
+    // No shadow, no border - clean solid background
   },
   tabIndicator: {
     position: 'absolute',
@@ -237,4 +225,3 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
 });
-

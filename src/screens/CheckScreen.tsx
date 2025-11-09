@@ -277,7 +277,7 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                 <TouchableOpacity 
                   style={[
                     styles.pickerButton, 
-                    { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : theme.cardAlt }
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : theme.cardAlt }
                   ]}
                   onPress={() => setTempYear(tempYear - 1)}
                 >
@@ -287,7 +287,7 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                 <TouchableOpacity 
                   style={[
                     styles.pickerButton, 
-                    { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : theme.cardAlt }
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : theme.cardAlt }
                   ]}
                   onPress={() => setTempYear(tempYear + 1)}
                 >
@@ -302,7 +302,7 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                     key={index}
                     style={[
                       styles.monthGridItem,
-                      { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : theme.cardAlt },
+                      { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : theme.cardAlt },
                       tempMonth === index && { backgroundColor: theme.primary }
                     ]}
                     onPress={() => setTempMonth(index)}
@@ -323,7 +323,7 @@ export const CheckScreen: React.FC<CheckScreenProps> = ({ navigation }) => {
                 <TouchableOpacity
                   style={[
                     styles.modalButton, 
-                    { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : theme.border }
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : theme.border }
                   ]}
                   onPress={handleCancelDate}
                 >

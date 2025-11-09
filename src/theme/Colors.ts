@@ -435,3 +435,33 @@ export const CATEGORY_COLORS = {
 export type ColorKey = keyof typeof COLORS;
 export type PassbookColor = typeof PASSBOOK_COLORS[number];
 export type CategoryColorKey = keyof typeof CATEGORY_COLORS;
+
+// Helper function to check if a theme is dark
+export const isDarkTheme = (themeName: string): boolean => {
+  const darkThemes = ['charcoalViolet', 'forestShadow', 'inkBlack'];
+  return darkThemes.includes(themeName);
+};
+
+// Get theme type for each theme
+export const THEME_TYPES = {
+  mistBlue: 'light',
+  lavenderSmoke: 'light',
+  roseDust: 'light',
+  oliveGray: 'light',
+  sandBeige: 'light',
+  seafoamGreen: 'light',
+  cloudGray: 'light',
+  plumNight: 'light',
+  mintFrost: 'light',
+  coralClay: 'light',
+  sageGreen: 'light',
+  denimBlue: 'light',
+  mochaCream: 'light',
+  tealOcean: 'light',
+  amberDawn: 'light',
+  charcoalViolet: 'dark',
+  icePink: 'light',
+  skyGray: 'light',
+  forestShadow: 'dark',
+  inkBlack: 'dark',
+} as const;

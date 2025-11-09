@@ -195,52 +195,57 @@ export const ThemeProposalsScreen: React.FC<ThemeProposalsScreenProps> = ({ navi
         color: DISCORD_COLORS.THEME_SUBMISSION,
         fields: [
           {
-            name: '?���?主�??�稱',
+            name: 'Theme name',
             value: themeName.trim(),
             inline: false,
           },
           {
-            name: '🎭 主題圖示',
+            name: 'Theme emoji',
             value: themeEmoji.trim(),
             inline: false,
           },
           {
-            name: '🎨 背景色',
+            name: 'Background',
             value: colors.background,
             inline: true,
           },
           {
-            name: '📄 卡片色',
+            name: 'Card',
             value: colors.card,
             inline: true,
           },
           {
-            name: '🔵 主色',
+            name: 'Card Alt',
+            value: colors.cardAlt,
+            inline: true,
+          },
+          {
+            name: 'Main color',
             value: colors.primary,
             inline: true,
           },
           {
-            name: '✨ 強調色',
+            name: 'Emphazes color',
             value: colors.accent,
             inline: true,
           },
           {
-            name: '📝 文字色',
+            name: 'Text color',
             value: colors.text,
             inline: true,
           },
           {
-            name: '🔲 邊框色',
+            name: 'Border color',
             value: colors.border,
             inline: true,
           },
           {
-            name: '?�� 平台',
+            name: 'Platform',
             value: 'React Native',
             inline: true,
           },
           {
-            name: '?? 語�?',
+            name: 'Language',
             value: config.language === 'zh-TW' ? '繁�?中�?' : 'English',
             inline: true,
           },

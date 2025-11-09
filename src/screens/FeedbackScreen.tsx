@@ -36,36 +36,36 @@ export const FeedbackScreen: React.FC<FeedbackScreenProps> = ({ navigation }) =>
   const sendToDiscord = async () => {
     try {
       const embed = {
-        title: '📝 新的反饋',
+        title: 'New suggestion received',
         color: 0x19a2e6,
         fields: [
           {
-            name: '� 姓名',
-            value: name.trim() || '未提供',
+            name: 'Name',
+            value: name.trim(),
             inline: true,
           },
           {
-            name: '📧 Email',
-            value: email.trim() || '未提供',
+            name: 'Email',
+            value: email.trim(),
             inline: true,
           },
           {
-            name: '📌 主題',
-            value: subject.trim() || '無主題',
+            name: 'Subject',
+            value: subject.trim(),
             inline: false,
           },
           {
-            name: '�💬 訊息',
+            name: 'Message',
             value: message.trim(),
             inline: false,
           },
           {
-            name: '📱 平台',
+            name: 'Platform',
             value: 'React Native',
             inline: true,
           },
           {
-            name: '🌐 語言',
+            name: 'Language',
             value: config.language === 'zh-TW' ? '繁體中文' : 'English',
             inline: true,
           },

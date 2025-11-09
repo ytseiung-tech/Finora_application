@@ -2,8 +2,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Context
 import { useApp } from '../context/AppContext';
@@ -82,8 +83,9 @@ const TabNavigatorContent = () => {
   const { t, config } = useApp();
   const theme = THEME_COLORS[config.theme] || THEME_COLORS.mistBlue;
   const isDark = ['charcoalViolet', 'forestShadow', 'inkBlack'].includes(config.theme);
+  const insets = useSafeAreaInsets();
   
-  // Dynamic colors based on theme - 深色主�?使用?�色?�景
+  // Dynamic colors based on theme - 深色主�?使用?�色?�景
   const tabBarBackgroundColor = isDark 
     ? 'rgba(20, 20, 25, 0.98)' 
     : 'rgba(255, 255, 255, 0.95)';
@@ -102,6 +104,8 @@ const TabNavigatorContent = () => {
             backgroundColor: tabBarBackgroundColor,
             borderTopColor: tabBarBorderColor,
             borderTopWidth: 1,
+            paddingBottom: insets.bottom || (Platform.OS === 'android' ? 10 : 20),
+            height: 70 + (insets.bottom || (Platform.OS === 'android' ? 10 : 20)),
           }
         ],
         tabBarActiveTintColor: theme.primary,
@@ -195,8 +199,6 @@ export const AppNavigator = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 80,
-    paddingBottom: 20,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

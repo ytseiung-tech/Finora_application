@@ -303,7 +303,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
               margin={0}
             >
               <Text style={[styles.chartTitle, { color: theme.text }]}>
-                {config.language === 'zh-TW' ? '每日分析' : 'Daily Analysis'}
+                {t.dailyAnalysis}
               </Text>
             {loading ? (
               <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t.loading}</Text>
@@ -327,10 +327,10 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                     </Text>
                     <Text style={[styles.dateHint, { color: theme.textSecondary }]}>
                       {selectedDateIndex === 29 
-                        ? (config.language === 'zh-TW' ? '今天' : 'Today')
+                        ? t.today
                         : selectedDateIndex === 28
-                        ? (config.language === 'zh-TW' ? '昨天' : 'Yesterday')
-                        : `${29 - selectedDateIndex} ${config.language === 'zh-TW' ? '天前' : 'days ago'}`
+                        ? t.yesterday
+                        : `${29 - selectedDateIndex} ${t.daysAgo}`
                       }
                     </Text>
                   </View>
@@ -352,7 +352,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                     <View style={styles.legendContainer}>
                       <View style={[styles.legendDot, { backgroundColor: theme.success }]} />
                       <Text style={[styles.legendText, { color: theme.textSecondary }]}>
-                        {config.language === 'zh-TW' ? '?嗅' : 'Income'}
+                        {t.incomeLabel}
                       </Text>
                     </View>
                     <Text style={[styles.summaryAmount, { color: theme.success }]}>
@@ -366,7 +366,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                     <View style={styles.legendContainer}>
                       <View style={[styles.legendDot, { backgroundColor: theme.error }]} />
                       <Text style={[styles.legendText, { color: theme.textSecondary }]}>
-                        {config.language === 'zh-TW' ? '?臬' : 'Expense'}
+                        {t.expensesLabel}
                       </Text>
                     </View>
                     <Text style={[styles.summaryAmount, { color: theme.error }]}>
@@ -381,9 +381,9 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
                   borderColor: theme.border 
                 }]}>
                   <Text style={[styles.netBalanceLabel, { color: theme.textSecondary }]}>
-                    {config.language === 'zh-TW' ? '?嗆瘛券?' : 'Daily Net'}
+                    {t.dailyNet}
                   </Text>
-                  <Text style={[styles.netBalanceAmount, { 
+                  <Text style={[styles.netBalanceAmount, {
                     color: (dailyIncomeData[selectedDateIndex]?.amount || 0) - (dailyExpenseData[selectedDateIndex]?.amount || 0) >= 0 
                       ? theme.success 
                       : theme.error 
@@ -395,7 +395,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
               </View>
             ) : (
               <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-                {config.language === 'zh-TW' ? '無數據' : 'No Data'}
+                {t.noData}
               </Text>
             )}
             </GlassCard>
@@ -438,7 +438,7 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }
           )}
 
           {/* Key Metrics */}
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>{config.language === 'zh-TW' ? '???' : 'Key Metrics'}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{t.keyMetrics}</Text>
           <View style={styles.metricsContainer}>
             <View style={styles.metricCardWrapper}>
               <GlassCard

@@ -101,6 +101,13 @@ export const translations = {
     totalsByAccount: 'Totals by Account',
     accounts: 'accounts',
     allAccounts: 'All Accounts',
+    keyMetrics: 'Key Metrics',
+    dailyAnalysis: 'Daily Analysis',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    daysAgo: 'days ago',
+    dailyNet: 'Daily Net',
+    noData: 'No Data',
     
     // CheckScreen
     monthlySummary: 'Monthly Summary',
@@ -289,6 +296,13 @@ export const translations = {
     totalsByAccount: '各帳戶總計',
     accounts: '個帳戶',
     allAccounts: '所有帳戶',
+    keyMetrics: '關鍵指標',
+    dailyAnalysis: '每日分析',
+    today: '今天',
+    yesterday: '昨天',
+    daysAgo: '天前',
+    dailyNet: '每日淨額',
+    noData: '無數據',
     
     // CheckScreen
     monthlySummary: '月度摘要',
